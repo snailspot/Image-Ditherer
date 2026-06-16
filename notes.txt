@@ -1,6 +1,44 @@
 Image ditherer project:
 
 Major requirements:
-    - Dither images
-    - Save dithered images
-    - User interface
+    - Load images (input into a default max size)
+    - Dither images using multiple algorithms (to start ordered and error diffusion)
+    - Save dithered images as png
+    - User interface which allows the adjusting of parameters (colours, threshold level etc)
+
+Implementation plan:
+    Stage 1: Start with dithering algorithm (ordered)
+                1- Importing images into python (PIL?) and manipulating as numpy array
+                2- Creating a basic ordered dithering algorithm
+                3- Introducing noise to the algorithm
+                4- Export image as png
+    Stage 2: Error diffusion algorithm
+                1- Work with base class established above to polymorph an error diffusion class
+                2- Floyd-Stienberg dithering as the base
+                3- Minimized average error dithering
+    Stage 3:  User interface using PyQt5
+                1- Watch tutorials on how PyQt5 works
+                2- Build visual artefacts to use for the GUI
+                3- Implement
+
+
+Notes:
+    Stage 1:
+
+    Stage 2:
+
+    Stage 3:
+
+
+Basic class structure:
+
+imageDitherer(ditheringAlgorithm)
+
+abstract ditheringAlgorithm:
+    |
+    |_ Ordered_dithering
+    |
+    |_ Floyd_Steinberg
+    |
+    |_ Minimized average error dithering
+
