@@ -1,0 +1,6 @@
+Image ditherer project:
+
+Major requirements:
+    - Dither images
+    - Save dithered images
+    - User interface
