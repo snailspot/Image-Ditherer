@@ -6,7 +6,7 @@ import numba
 
 class errorDiffusion():
 
-    def dither(self, filePath):
+    def dither(self, filePath, thresholdValue=0.5):
         validFile = False
         try:
             image = Image.open(filePath)
@@ -19,5 +19,10 @@ class errorDiffusion():
             if len(imageData.shape) == 2:
                 imageData = imageData[:, :, np.newaxis]
 
+            imageData = self.__threshold(imageData, thresholdValue)
+
             plt.imshow(imageData[:, :, 0], cmap='Greys_r')
             plt.show()
+
+    def __threshold(self, pixArray, value=0.5):
+        return np.where(pixArray > value, 1, 0)
