@@ -2,17 +2,17 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import numba
-from ditherer import ditherAlgorithm
+from .ditherAlgorithm import DitherAlgorithm
 
 
-class imageDitherer():
+class ImageDitherer():
     fileName = r"output.png"
     __MAX_DIMENSIONS = 400
 
     def __init__(self):
         pass
 
-    def dither(self, filePath, ditherMethod : ditherAlgorithm, thresholdPercent=50):
+    def dither(self, filePath, ditherMethod : DitherAlgorithm, thresholdPercent=50):
         validFile = False
         try:
             image = Image.open(filePath)

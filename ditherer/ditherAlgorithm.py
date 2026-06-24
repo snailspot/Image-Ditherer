@@ -1,13 +1,30 @@
 from abc import ABC, abstractmethod
 import numpy as np
+import matplotlib.pyplot as plt
 import numba
 
-class ditherAlgorithm(ABC):
+class DitherAlgorithm(ABC):
     @abstractmethod
     def ditherImage(self, pixArray, colours, colourThresholds=None):
         pass
 
-class floydSteinberg(ditherAlgorithm):
+class BayerOrdered(DitherAlgorithm):
+    def generateThresholdMap(self, matrixSize):
+        baseMatrix = np.array([[0,3],[2,1]], dtype="float32")
+        if matrixSize == 0:
+            return np.array([[0]])
+        prevMatrix = self.generateThresholdMap(matrixSize-1)
+        matrix = np.kron(baseMatrix, np.ones_like(prevMatrix))
+        matrix = matrix + np.tile(prevMatrix, (2, 2)) * 4
+        return matrix
+        
+    def ditherImage(self, pixArray, colours=4, colourThresholds=None):
+
+
+
+        return pixArray
+
+class FloydSteinberg(DitherAlgorithm):
     def ditherImage(self, pixArray, colours=4, colourThresholds=None):
         width, height = pixArray.shape
         if colourThresholds is None or len(colourThresholds) != colours:
