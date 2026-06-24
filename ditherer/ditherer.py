@@ -2,13 +2,17 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import numba
+from ditherer import ditherAlgorithm
 
 
-class errorDiffusion():
+class imageDitherer():
     fileName = r"output.png"
-    __MAX_DIMENSIONS = 500
+    __MAX_DIMENSIONS = 400
 
-    def dither(self, filePath, thresholdPercent=50):
+    def __init__(self):
+        pass
+
+    def dither(self, filePath, ditherMethod : ditherAlgorithm, thresholdPercent=50):
         validFile = False
         try:
             image = Image.open(filePath)
@@ -19,7 +23,7 @@ class errorDiffusion():
         if validFile:
             imageData = self.__formatImage(image)
 
-            ditheredImage = self.__ditherImage(imageData)
+            ditheredImage = ditherMethod.ditherImage(imageData)
             # self.__displayImage(ditheredImage)
             self.__saveImage(ditheredImage)
 
@@ -58,25 +62,3 @@ class errorDiffusion():
 
     def __saveImage(self, pixArray):
         Image.fromarray(pixArray.astype(np.uint8)).save(self.fileName)
-
-    def __ditherImage(self, pixArray, colours = 4, colourThresholds = None):
-        width, height = pixArray.shape
-        if colourThresholds is None or len(colourThresholds) != colours:
-            colourThresholds = np.linspace(0, 255, colours).astype(np.float32)
-        for y in range(height):
-            for x in range(width):
-                oldPixel = pixArray[x, y]
-                #newPixel = 255 if oldPixel > 127 else 0
-                colourIndex = (np.abs(colourThresholds - oldPixel)).argmin()
-                newPixel = colourThresholds[colourIndex]
-                pixArray[x, y] = newPixel
-                quantError = oldPixel - newPixel
-                if xInBounds := x + 1 < width:
-                    pixArray[x + 1][y] = pixArray[x + 1][y] + quantError * 7/16
-                if y + 1 < height:
-                    if x-1 >= 0:
-                        pixArray[x - 1][y + 1] = pixArray[x - 1][y + 1] + quantError * 3/16
-                    pixArray[x][y + 1] = pixArray[x][y + 1] + quantError * 5/16
-                    if xInBounds:
-                        pixArray[x + 1][y + 1] = pixArray[x + 1][y + 1] + quantError * 1/16
-        return np.clip(pixArray, 0, 255)

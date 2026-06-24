@@ -1,6 +1,7 @@
-from ditherer.errorDiffDitherer import errorDiffusion
+from ditherer.ditherer import imageDitherer
+import ditherer.ditherAlgorithm as da
 
 
-ed = errorDiffusion()
+ed = imageDitherer()
 filepath = r"assets\testInputColour.png"
-ed.dither(filepath)
+ed.dither(filepath, da.floydSteinberg())
