@@ -7,12 +7,12 @@ from .ditherAlgorithm import DitherAlgorithm
 
 class ImageDitherer():
     fileName = r"output.png"
-    __MAX_DIMENSIONS = 400
+    __MAX_DIMENSIONS = 500
 
     def __init__(self):
         pass
 
-    def dither(self, filePath, ditherMethod : DitherAlgorithm, thresholdPercent=50):
+    def dither(self, filePath, ditherMethod : DitherAlgorithm, values=4):
         validFile = False
         try:
             image = Image.open(filePath)
@@ -23,7 +23,7 @@ class ImageDitherer():
         if validFile:
             imageData = self.__formatImage(image)
 
-            ditheredImage = ditherMethod.ditherImage(imageData)
+            ditheredImage = ditherMethod.ditherImage(imageData, values)
             # self.__displayImage(ditheredImage)
             self.__saveImage(ditheredImage)
 
