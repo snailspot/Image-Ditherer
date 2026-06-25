@@ -12,7 +12,7 @@ class ImageDitherer():
     def __init__(self):
         pass
 
-    def dither(self, filePath, ditherMethod : DitherAlgorithm, values=4):
+    def dither(self, filePath, ditherMethod : DitherAlgorithm, values=3, valueThresholds = None):
         validFile = False
         try:
             image = Image.open(filePath)
@@ -23,7 +23,7 @@ class ImageDitherer():
         if validFile:
             imageData = self.__formatImage(image)
 
-            ditheredImage = ditherMethod.ditherImage(imageData, values)
+            ditheredImage = ditherMethod.ditherImage(imageData, values, valueThresholds)
             # self.__displayImage(ditheredImage)
             self.__saveImage(ditheredImage)
 
