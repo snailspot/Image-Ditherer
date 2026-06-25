@@ -13,7 +13,7 @@ class DitherAlgorithm(ABC):
 class BayerOrdered(DitherAlgorithm):
     @staticmethod
     @njit
-    def _bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix):
+    def __bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix):
         width, height = pixArray.shape
         matrixWidth, matrixHeight = matrix.shape
         for y in range(height):
@@ -34,7 +34,7 @@ class BayerOrdered(DitherAlgorithm):
 
     @staticmethod
     @njit
-    def _bayerDitherQuantised(pixArray, values, matrix):
+    def __bayerDitherQuantised(pixArray, values, matrix):
         width, height = pixArray.shape
         matrixWidth, matrixHeight = matrix.shape
         for y in range(height):
@@ -61,9 +61,9 @@ class BayerOrdered(DitherAlgorithm):
     def ditherImage(self, pixArray, values, valueThresholds=None):
         matrix = self.__generateThresholdMap(self.__matrixSize)
         if valueThresholds is None:
-            return self._bayerDitherQuantised(pixArray, values, matrix)
+            return self.__bayerDitherQuantised(pixArray, values, matrix)
         else:
-            return self._bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix)
+            return self.__bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix)
 
     
     def setMatrixSize(self, value):
@@ -75,7 +75,7 @@ class FloydSteinberg(DitherAlgorithm):
 
     @staticmethod
     @njit
-    def _floydSteinbergDither(pixArray, valueThresholds):
+    def __floydSteinbergDither(pixArray, valueThresholds):
         width, height = pixArray.shape
         for y in range(height):
             for x in range(width):
@@ -105,4 +105,4 @@ class FloydSteinberg(DitherAlgorithm):
         if valueThresholds is None or len(valueThresholds) != values:
             valueThresholds = np.linspace(0, 255, values).astype(np.float32)
 
-        return self._floydSteinbergDither(pixArray, valueThresholds)
+        return self.__floydSteinbergDither(pixArray, valueThresholds)

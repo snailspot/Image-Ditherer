@@ -8,6 +8,6 @@ filepath = r"assets\testInput2Colour.png"
 fs = da.FloydSteinberg()
 bo = da.BayerOrdered()
 
-ed.dither(filepath, bo)
+ed.dither(bo)
 
 

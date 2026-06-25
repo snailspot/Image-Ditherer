@@ -8,11 +8,13 @@ from .ditherAlgorithm import DitherAlgorithm
 class ImageDitherer():
     fileName = r"output.png"
     __MAX_DIMENSIONS = 500
+    __imageArray = None
+    __baseImageArray = None
 
     def __init__(self):
         pass
 
-    def dither(self, filePath, ditherMethod : DitherAlgorithm, values=3, valueThresholds = None):
+    def loadImage(self, filePath):
         validFile = False
         try:
             image = Image.open(filePath)
@@ -21,11 +23,15 @@ class ImageDitherer():
             pass
 
         if validFile:
-            imageData = self.__formatImage(image)
+            self.__baseImageArray = self.__formatImage(image)
+            self.__imageArray = self.__baseImageArray
 
-            ditheredImage = ditherMethod.ditherImage(imageData, values, valueThresholds)
-            # self.__displayImage(ditheredImage)
-            self.__saveImage(ditheredImage)
+    def dither(self, ditherMethod : DitherAlgorithm, values=8, valueThresholds = None):
+            if self.__imageArray is None:
+                self.loadImage(r"assets\testInputColour.png")
+            ditheredImage = ditherMethod.ditherImage(self.__imageArray, values, valueThresholds)
+            self.__displayImage(ditheredImage)
+            #self.__saveImage(ditheredImage)
 
     def __threshold(self, pixArray, value):
         normalisedValue = value * 2.55
