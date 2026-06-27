@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import matplotlib.pyplot as plt
-from numba import njit
+from numba import njit, prange
 import math
 
 class DitherAlgorithm(ABC):
@@ -12,11 +12,11 @@ class DitherAlgorithm(ABC):
 
 class BayerOrdered(DitherAlgorithm):
     @staticmethod
-    @njit
+    @njit(parallel=True, cache=True)
     def __bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix):
         width, height = pixArray.shape
         matrixWidth, matrixHeight = matrix.shape
-        for y in range(height):
+        for y in prange(height):
             for x in range(width):
                 ditherX = x % matrixWidth
                 ditherY = y % matrixHeight
@@ -33,11 +33,11 @@ class BayerOrdered(DitherAlgorithm):
         return pixArray
 
     @staticmethod
-    @njit
+    @njit(parallel=True, cache=True)
     def __bayerDitherQuantised(pixArray, values, matrix):
         width, height = pixArray.shape
         matrixWidth, matrixHeight = matrix.shape
-        for y in range(height):
+        for y in prange(height):
             for x in range(width):
                 ditherX = x % matrixWidth
                 ditherY = y % matrixHeight
@@ -80,9 +80,9 @@ class BayerOrdered(DitherAlgorithm):
 class FloydSteinberg(DitherAlgorithm):
 
     @staticmethod
-    @njit
+    @njit(cache=True)
     def __floydSteinbergDither(pixArray, valueThresholds):
-        width, height = pixArray.shape
+        
         for y in range(height):
             for x in range(width):
                 oldPixel = pixArray[x, y]

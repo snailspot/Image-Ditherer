@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-from numba import njit
+from numba import njit, prange
 from .ditherAlgorithm import DitherAlgorithm
 
 
@@ -38,18 +38,22 @@ class ImageDitherer():
 
     
     def adjustImage(self, brightnessLevel=0, contrastLevel=0):
+        @njit(parallel = True, cache=True)
+        def applyContrastBrightness(pixArray, brightnessLevel, contrastFactor):
+            width, height = pixArray.shape
+            for y in prange(height):
+                for x in range(width):
+                    pixel = pixArray[x, y]
+                    pixel = (pixel - 127) * contrastFactor + 127 + brightnessLevel
+                    pixArray[x, y] = min(255, max(0, pixel))
+
         self.__imageArray = np.copy(self.__baseImageArray)
         brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
         contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
-        
-        # Change contrast then brightness
         contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
-        self.__imageArray -= 127
-        self.__imageArray *= contrastFactor
-        self.__imageArray += 127
-        self.__imageArray += brightnessLevel
-        np.clip(self.__imageArray, 0, 255, out=self.__imageArray)
-        
+        applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
+
+
 
 
     def __formatImage(self, image):

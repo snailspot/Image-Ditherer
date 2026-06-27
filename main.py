@@ -10,6 +10,10 @@ bo = da.BayerOrdered()
 
 ed.loadImage(filepath)
 ed.adjustImage(0, 50)
-ed.dither(fs, 2)
+ed.adjustImage(0, 50)
+ed.adjustImage(0, 50)
+ed.adjustImage(0, 50)
+ed.dither(bo, 2)
 ed.displayImage()
+
 
