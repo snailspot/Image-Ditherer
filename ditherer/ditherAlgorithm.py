@@ -6,7 +6,7 @@ import math
 
 class DitherAlgorithm(ABC):
     @abstractmethod
-    def ditherImage(self, pixArray, values, valueThresholds=None):
+    def ditherImage(self, pixArray, values, valueThresholds=None, out=None):
         pass
 
 
@@ -30,7 +30,7 @@ class BayerOrdered(DitherAlgorithm):
                         bestDist = dist
                         bestMatch = i
                 pixArray[x, y] = valueThresholds[bestMatch]
-        return np.clip(pixArray, 0, 255)
+        return pixArray
 
     @staticmethod
     @njit
@@ -44,7 +44,7 @@ class BayerOrdered(DitherAlgorithm):
                 ditherFactor = (matrix[ditherX, ditherY]  * (1/matrix.size)) - 0.5
                 ditherValue = max(0, min(255, pixArray[x, y] + (ditherFactor *  255)))
                 pixArray[x, y] = math.floor(ditherValue * (values-1) / 255 + 0.5) * 255 / (values-1)
-        return np.clip(pixArray, 0, 255)
+        return pixArray
 
     def __init__(self):
         self.__matrixSize = 2
@@ -58,12 +58,18 @@ class BayerOrdered(DitherAlgorithm):
         matrix = matrix + np.tile(prevMatrix, (2, 2)) * 4
         return matrix
         
-    def ditherImage(self, pixArray, values, valueThresholds=None):
+    def ditherImage(self, pixArray, values, valueThresholds=None, out=None):
         matrix = self.__generateThresholdMap(self.__matrixSize)
         if valueThresholds is None:
-            return self.__bayerDitherQuantised(pixArray, values, matrix)
+            result = self.__bayerDitherQuantised(pixArray, values, matrix)
         else:
-            return self.__bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix)
+            result = self.__bayerDitherUnevenThreshold(pixArray, valueThresholds, matrix)
+
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result
 
     
     def setMatrixSize(self, value):
@@ -101,8 +107,12 @@ class FloydSteinberg(DitherAlgorithm):
                         pixArray[x + 1, y + 1] = pixArray[x + 1, y + 1] + quantError * 1/16
         return pixArray
 
-    def ditherImage(self, pixArray, values, valueThresholds=None):
+    def ditherImage(self, pixArray, values, valueThresholds=None, out=None):
         if valueThresholds is None or len(valueThresholds) != values:
             valueThresholds = np.linspace(0, 255, values).astype(np.float32)
-
-        return self.__floydSteinbergDither(pixArray, valueThresholds)
+        result = self.__floydSteinbergDither(pixArray, valueThresholds)
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result

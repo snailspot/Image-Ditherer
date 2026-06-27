@@ -1,14 +1,19 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import numba
+from numba import njit
 from .ditherAlgorithm import DitherAlgorithm
 
 
 class ImageDitherer():
     fileName = r"output.png"
     __MAX_DIMENSIONS = 500
+    __MAX_CONTRAST = 255
+    __MIN_CONTRAST = -255
+    __MAX_BRIGHTNESS = 255
+    __MIN_BRIGHTNESS = -255
     __imageArray = None
+    __ditheredImageArray = None
     __baseImageArray = None
 
     def __init__(self):
@@ -21,17 +26,38 @@ class ImageDitherer():
             validFile = image is not None
         except:
             pass
-
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
-            self.__imageArray = self.__baseImageArray
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=8, valueThresholds = None):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
-            ditheredImage = ditherMethod.ditherImage(self.__imageArray, values, valueThresholds)
-            self.__displayImage(ditheredImage)
-            #self.__saveImage(ditheredImage)
+                self.__imageArray = np.copy(self.__baseImageArray)
+            self.__ditheredImageArray = np.copy(self.__imageArray)
+            ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
+
+    
+    def adjustImage(self, brightnessLevel=0, contrastLevel=0):
+        self.__imageArray = np.copy(self.__baseImageArray)
+        brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
+        contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
+        
+        # Change contrast then brightness
+        contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
+        self.__imageArray -= 127
+        self.__imageArray *= contrastFactor
+        self.__imageArray += 127
+        self.__imageArray += brightnessLevel
+        np.clip(self.__imageArray, 0, 255, out=self.__imageArray)
+        
+
+
+    def __formatImage(self, image):
+        image = self.__resizeImage(image)
+        pixArray = np.array(image).astype(np.float32)
+        if len(pixArray.shape) == 3:
+            pixArray = self.__toGrayscale(pixArray)
+        return pixArray
 
     def __threshold(self, pixArray, value):
         normalisedValue = value * 2.55
@@ -55,16 +81,11 @@ class ImageDitherer():
             image = image.resize((width, height), Image.BICUBIC)
         return image
 
-    def __displayImage(self, pixArray):
-        plt.imshow(pixArray[:, :], cmap='gray')
-        plt.show()
-    
-    def __formatImage(self, image):
-        image = self.__resizeImage(image)
-        pixArray = np.array(image).astype(np.float32)
-        if len(pixArray.shape) == 3:
-            pixArray = self.__toGrayscale(pixArray)
-        return pixArray
+    def displayImage(self):
+        if self.__ditheredImageArray is not None:
+            plt.imshow(self.__ditheredImageArray[:, :], cmap='gray')
+            plt.show()
 
-    def __saveImage(self, pixArray):
-        Image.fromarray(pixArray.astype(np.uint8)).save(self.fileName)
+    def saveImage(self):
+        if self.__ditheredImageArray is not None:
+            Image.fromarray(self.__ditheredImageArray.astype(np.uint8)).save(self.fileName)

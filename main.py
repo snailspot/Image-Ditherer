@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ed = d.ImageDitherer()
-filepath = r"assets\testInput2Colour.png"
+filepath = r"assets\testInputBW.png"
 fs = da.FloydSteinberg()
 bo = da.BayerOrdered()
 
-ed.dither(bo)
-
+ed.loadImage(filepath)
+ed.adjustImage(0, 50)
+ed.dither(fs, 2)
+ed.displayImage()
 
