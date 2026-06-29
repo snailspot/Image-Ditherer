@@ -1,6 +1,7 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from numba import njit, prange
 from .ditherAlgorithm import DitherAlgorithm
 
@@ -29,12 +30,14 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
+            self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
             ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
+            self.__ditheredImageArray = self.__resetSize(self.__ditheredImageArray)
 
     
     def adjustImage(self, brightnessLevel=0, contrastLevel=0):
@@ -53,8 +56,30 @@ class ImageDitherer():
         contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
         applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
 
+    def __resizePixels(self, pixArray, pixelSize, out=None):
+        factor = 1/pixelSize
+        image = Image.fromarray(pixArray)
+        height, width = self.__baseImageArray.shape
+        scaleWidth = math.floor(width * factor)
+        scaleHeight = math.floor(height * factor)
+        downscaled = image.resize((scaleWidth, scaleHeight), Image.NEAREST)
+        result = np.array(downscaled).astype(np.float32)
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result
 
-
+    def __resetSize(self, pixArray, out=None):
+        image = Image.fromarray(pixArray)
+        height, width = self.__baseImageArray.shape
+        upscaled = image.resize((width, height), Image.NEAREST)
+        result = np.array(upscaled).astype(np.float32)
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result
 
     def __formatImage(self, image):
         image = self.__resizeImage(image)
