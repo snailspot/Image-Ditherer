@@ -11,7 +11,7 @@ ad = da.AtkinsonDithering()
 vd = da.VerticalDiffusionDithering()
 
 ed.loadImage(filepath)
-ed.dither(fs, 3, pixelSize=4)
+ed.dither(fs, 4, pixelSize=2)
 
 ed.displayImage()
 
