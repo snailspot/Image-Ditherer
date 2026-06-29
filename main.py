@@ -7,13 +7,11 @@ ed = d.ImageDitherer()
 filepath = r"assets\testInputBW.png"
 fs = da.FloydSteinberg()
 bo = da.BayerOrdered()
+ad = da.AtkinsonDithering()
+vd = da.VerticalDiffusionDithering()
 
 ed.loadImage(filepath)
-ed.adjustImage(0, 50)
-ed.adjustImage(0, 50)
-ed.adjustImage(0, 50)
-ed.adjustImage(0, 50)
-ed.dither(bo, 2)
+ed.dither(vd, 3)
 ed.displayImage()
 
 

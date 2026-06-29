@@ -82,7 +82,7 @@ class FloydSteinberg(DitherAlgorithm):
     @staticmethod
     @njit(cache=True)
     def __floydSteinbergDither(pixArray, valueThresholds):
-        
+        width, height = pixArray.shape
         for y in range(height):
             for x in range(width):
                 oldPixel = pixArray[x, y]
@@ -116,3 +116,84 @@ class FloydSteinberg(DitherAlgorithm):
             return out
         else:
             return result
+        
+
+class AtkinsonDithering(DitherAlgorithm):
+    @staticmethod
+    @njit(cache=True)
+    def __atkinsonDither(pixArray, valueThresholds):
+        width, height = pixArray.shape
+        for y in range(height):
+            for x in range(width):
+                oldPixel = pixArray[x, y]
+                bestMatch = 0
+                bestDist = abs(valueThresholds[0] - oldPixel)
+                for i in range(1, len(valueThresholds)):
+                    dist = abs(valueThresholds[i] - oldPixel)
+                    if dist < bestDist:
+                        bestDist = dist
+                        bestMatch = i
+                newPixel = valueThresholds[bestMatch]
+                pixArray[x, y] = newPixel
+                quantError = oldPixel - newPixel
+                xInBounds = x + 1 < width
+                yInBounds = y + 1 < height
+                if xInBounds:
+                    pixArray[x + 1, y] = pixArray[x + 1, y] + quantError/8
+                    if x + 2 < width: pixArray[x + 2, y] = pixArray[x + 2, y] + quantError/8
+                if yInBounds:
+                    pixArray[x, y + 1] = pixArray[x, y + 1] + quantError/8
+                    if xInBounds:
+                        pixArray[x + 1, y + 1] = pixArray[x + 1, y + 1] + quantError/8
+                    if x - 1 >= 0:
+                        pixArray[x - 1, y + 1] = pixArray[x - 1, y + 1] + quantError/8    
+                    if y + 2 < height:
+                        pixArray[x, y + 2] = pixArray[x, y + 2] + quantError/8
+        return pixArray
+
+    def ditherImage(self, pixArray, values, valueThresholds=None, out=None):
+        if valueThresholds is None or len(valueThresholds) != values:
+            valueThresholds = np.linspace(0, 255, values).astype(np.float32)
+        result = self.__atkinsonDither(pixArray, valueThresholds)
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result
+        
+class VerticalDiffusionDithering(DitherAlgorithm):
+    @staticmethod
+    @njit(cache=True)
+    def __verticalDiffusionDither(pixArray, valueThresholds):
+        width, height = pixArray.shape
+        for y in range(height):
+            for x in range(width):
+                oldPixel = pixArray[x, y]
+                bestMatch = 0
+                bestDist = abs(valueThresholds[0] - oldPixel)
+                for i in range(1, len(valueThresholds)):
+                    dist = abs(valueThresholds[i] - oldPixel)
+                    if dist < bestDist:
+                        bestDist = dist
+                        bestMatch = i
+                newPixel = valueThresholds[bestMatch]
+                pixArray[x, y] = newPixel
+                quantError = oldPixel - newPixel
+                if x + 1 > width:
+                    pixArray[x + 1, y] = pixArray[x + 1, y] + quantError * 2/8
+                if y + 1 < height:
+                    pixArray[x, y + 1] = pixArray[x, y + 1] + quantError * 4/8
+                    if y + 2 < height:
+                        pixArray[x, y + 2] = pixArray[x, y + 2] + quantError * 2/8
+        return pixArray
+
+    def ditherImage(self, pixArray, values, valueThresholds=None, out=None):
+        if valueThresholds is None or len(valueThresholds) != values:
+            valueThresholds = np.linspace(0, 255, values).astype(np.float32)
+        result = self.__verticalDiffusionDither(pixArray, valueThresholds)
+        if out is not None:
+            out[:] = result
+            return out
+        else:
+            return result
+
