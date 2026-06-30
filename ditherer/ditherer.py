@@ -14,6 +14,7 @@ class ImageDitherer():
     __MIN_BRIGHTNESS = -255
     __MAX_NOISE = 100
     __MAX_PIXEL_SIZE = 10
+    __MAX_THRESHOLD = 90
     __imageArray = None
     __ditheredImageArray = None
     __baseImageArray = None
@@ -31,7 +32,7 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomThreshold=None):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
@@ -50,6 +51,11 @@ class ImageDitherer():
             # Apply colour map
             if colourMap is not None:
                 self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
+            
+            # Apply Bloom
+            if bloomLevel > 0 and bloomThreshold is not None:
+                bloomThreshold = min(self.__MAX_THRESHOLD, bloomThreshold)
+                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, self.__threshold(self.__imageArray, bloomThreshold))
 
     # Preprocessing methods
 
@@ -130,6 +136,26 @@ class ImageDitherer():
             return out
         else:
             return imageWithNoise
+        
+    def __threshold(self, pixArray, value):
+        normalisedValue = value * 2.55
+        return np.where(pixArray > normalisedValue, 255, 0)
+
+    @staticmethod
+    @njit(parallel = True, cache=True)
+    def addBloom(pixArray, bloomLevel, thresholdMap):
+        bloomFactor = (259 * (bloomLevel + 255)/(255 * (259 - bloomLevel)))
+        width, height = thresholdMap.shape
+        for y in prange(height):
+            for x in range(width):
+                if thresholdMap[x, y] == 255:
+                    pixArray[x, y] *= bloomFactor
+                    if x + 1 < width: pixArray[x + 1, y] *= bloomFactor
+                    if y + 1 < height: pixArray[x, y + 1] *= bloomFactor
+                    if y - 1 >= 0 : pixArray[x, y - 1] *= bloomFactor
+                    if x - 1 >= 0 : pixArray[x - 1, y] *= bloomFactor
+        return np.clip(pixArray, 0, 255)
+
 
     # Display and save image methods
 
@@ -148,3 +174,4 @@ class ImageDitherer():
             Image.fromarray(self.__ditheredImageArray.astype(np.uint8)).save(self.fileName)
         else:
             warnings.warn("An image must be dithered first to be saved") 
+            
