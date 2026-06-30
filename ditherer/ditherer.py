@@ -32,7 +32,7 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomThreshold=None):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
@@ -53,9 +53,10 @@ class ImageDitherer():
                 self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
             
             # Apply Bloom
-            if bloomLevel > 0 and bloomThreshold is not None:
-                bloomThreshold = min(self.__MAX_THRESHOLD, bloomThreshold)
-                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, self.__threshold(self.__imageArray, bloomThreshold))
+            if bloomLevel > 0:
+                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
+            
+            
 
     # Preprocessing methods
 
@@ -138,14 +139,14 @@ class ImageDitherer():
             return imageWithNoise
         
     def __threshold(self, pixArray, value):
-        normalisedValue = value * 2.55
-        return np.where(pixArray > normalisedValue, 255, 0)
+        mask = np.all(pixArray > value, axis=-1)
+        return np.where(mask, 255, 0)
 
     @staticmethod
     @njit(parallel = True, cache=True)
     def addBloom(pixArray, bloomLevel, thresholdMap):
         bloomFactor = (259 * (bloomLevel + 255)/(255 * (259 - bloomLevel)))
-        width, height = thresholdMap.shape
+        width, height, c = pixArray.shape
         for y in prange(height):
             for x in range(width):
                 if thresholdMap[x, y] == 255:

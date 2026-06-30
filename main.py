@@ -17,7 +17,7 @@ colourPinkMap = np.array([[72, 31, 56] ,[149, 64, 117], [249,192, 218]])
 ed.loadImage(filepath)
 bo.setMatrixSize(3)
 ed.adjustImage(70, contrastLevel=100)
-ed.dither(bo, 2, pixelSize=3, noiseLevel=30, colourMap=colourPinkMap, bloomLevel=100, bloomThreshold=86)
+ed.dither(bo, 2, pixelSize=3, colourMap=colourMap, bloomLevel=30)
 ed.displayImage()
 
 
