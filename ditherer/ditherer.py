@@ -5,7 +5,6 @@ from numba import njit, prange
 from .ditherAlgorithm import DitherAlgorithm
 import warnings
 
-
 class ImageDitherer():
     fileName = r"output.png"
     __MAX_DIMENSIONS = 800
@@ -13,6 +12,8 @@ class ImageDitherer():
     __MIN_CONTRAST = -255
     __MAX_BRIGHTNESS = 255
     __MIN_BRIGHTNESS = -255
+    __MAX_NOISE = 100
+    __MAX_PIXEL_SIZE = 10
     __imageArray = None
     __ditheredImageArray = None
     __baseImageArray = None
@@ -30,18 +31,20 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
-
+            values = values if colourMap is None else int(colourMap.size / 3)
             # Adjust pixel size and dither
             if pixelSize > 1: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
+                if noiseLevel > 0: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
                 self.__ditheredImageArray = self.__resetSize(self.__ditheredImageArray, pixelSize)
             else:
+                if noiseLevel > 0: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
 
             # Apply colour map
@@ -78,24 +81,26 @@ class ImageDitherer():
     # Image adjustment methods
     
     def adjustImage(self, brightnessLevel=0, contrastLevel=0):
-        @njit(parallel = True, cache=True)
-        def applyContrastBrightness(pixArray, brightnessLevel, contrastFactor):
-            width, height = pixArray.shape
-            for y in prange(height):
-                for x in range(width):
-                    pixel = pixArray[x, y]
-                    pixel = (pixel - 127) * contrastFactor + 127 + brightnessLevel
-                    pixArray[x, y] = min(255, max(0, pixel))
-
         self.__imageArray = np.copy(self.__baseImageArray)
         brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
         contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
         contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
-        applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
+        self.__applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
+    
+    @staticmethod
+    @njit(parallel = True, cache=True)
+    def __applyContrastBrightness(pixArray, brightnessLevel, contrastFactor):
+        width, height = pixArray.shape
+        for y in prange(height):
+            for x in range(width):
+                pixel = pixArray[x, y]
+                pixel = (pixel - 127) * contrastFactor + 127 + brightnessLevel
+                pixArray[x, y] = min(255, max(0, pixel))
 
-    # Post processing methods
+    # Dither processing methods
 
     def __resizePixels(self, pixArray, pixelSize):
+        pixelSize = min(self.__MAX_PIXEL_SIZE, pixelSize)
         return pixArray[::pixelSize, ::pixelSize]
 
     def __resetSize(self, pixArray, pixelSize):
@@ -112,6 +117,19 @@ class ImageDitherer():
             return colourArray
         else:
             raise IndexError("Number of colours in colour map and number of values in image must match to colourise")
+    
+    def __addNoise(self, pixArray, noiseLevel, out=None):
+        width, height = pixArray.shape
+        noiseLevel =  min(self.__MAX_NOISE, noiseLevel)  / self.__MAX_NOISE * 20
+        noise = np.random.normal(0, noiseLevel, pixArray.size)
+        noise = np.reshape(noise, (width, height))
+        imageWithNoise = np.clip((pixArray + noise), 0, 255)
+
+        if out is not None:
+            out[:] = imageWithNoise
+            return out
+        else:
+            return imageWithNoise
 
     # Display and save image methods
 
