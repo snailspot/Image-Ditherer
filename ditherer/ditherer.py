@@ -1,9 +1,9 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 from numba import njit, prange
 from .ditherAlgorithm import DitherAlgorithm
+import warnings
 
 
 class ImageDitherer():
@@ -30,37 +30,25 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
-            self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
-            ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
-            self.__ditheredImageArray = self.__resetSize(self.__ditheredImageArray, pixelSize)
 
-    
-    def adjustImage(self, brightnessLevel=0, contrastLevel=0):
-        @njit(parallel = True, cache=True)
-        def applyContrastBrightness(pixArray, brightnessLevel, contrastFactor):
-            width, height = pixArray.shape
-            for y in prange(height):
-                for x in range(width):
-                    pixel = pixArray[x, y]
-                    pixel = (pixel - 127) * contrastFactor + 127 + brightnessLevel
-                    pixArray[x, y] = min(255, max(0, pixel))
+            # Adjust pixel size and dither
+            if pixelSize > 1: 
+                self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
+                ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
+                self.__ditheredImageArray = self.__resetSize(self.__ditheredImageArray, pixelSize)
+            else:
+                ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
 
-        self.__imageArray = np.copy(self.__baseImageArray)
-        brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
-        contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
-        contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
-        applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
+            # Apply colour map
+            if colourMap is not None:
+                self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
 
-    def __resizePixels(self, pixArray, pixelSize):
-        return pixArray[::pixelSize, ::pixelSize]
-
-    def __resetSize(self, pixArray, pixelSize):
-        return pixArray.repeat(pixelSize, axis=0).repeat(pixelSize, axis=1)
+    # Preprocessing methods
 
     def __formatImage(self, image):
         image = self.__resizeImage(image)
@@ -68,10 +56,6 @@ class ImageDitherer():
         if len(pixArray.shape) == 3:
             pixArray = self.__toGrayscale(pixArray)
         return pixArray
-
-    def __threshold(self, pixArray, value):
-        normalisedValue = value * 2.55
-        return np.where(pixArray > normalisedValue, np.iinfo(np.uint8).max, 0)
 
     def __toGrayscale(self, pixArray):
         # based on the following grayscale formula gray = 0.3 * R + 0.59 * G + 0.11 * B
@@ -90,12 +74,59 @@ class ImageDitherer():
                 height = self.__MAX_DIMENSIONS
             image = image.resize((width, height), Image.BICUBIC)
         return image
+    
+    # Image adjustment methods
+    
+    def adjustImage(self, brightnessLevel=0, contrastLevel=0):
+        @njit(parallel = True, cache=True)
+        def applyContrastBrightness(pixArray, brightnessLevel, contrastFactor):
+            width, height = pixArray.shape
+            for y in prange(height):
+                for x in range(width):
+                    pixel = pixArray[x, y]
+                    pixel = (pixel - 127) * contrastFactor + 127 + brightnessLevel
+                    pixArray[x, y] = min(255, max(0, pixel))
+
+        self.__imageArray = np.copy(self.__baseImageArray)
+        brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
+        contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
+        contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
+        applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
+
+    # Post processing methods
+
+    def __resizePixels(self, pixArray, pixelSize):
+        return pixArray[::pixelSize, ::pixelSize]
+
+    def __resetSize(self, pixArray, pixelSize):
+        return pixArray.repeat(pixelSize, axis=0).repeat(pixelSize, axis=1)
+
+    def __colourise(self, pixArray, colourMap):
+        colourArray = np.dstack((pixArray, pixArray, pixArray))
+        imageValues = np.unique(colourArray).astype('uint8')
+        if imageValues.size * 3 == colourMap.size:
+            for i in range (imageValues.size):
+                value = imageValues[i]
+                mask = np.all(colourArray == value, axis=-1)
+                colourArray[mask] = colourMap[i]
+            return colourArray
+        else:
+            raise IndexError("Number of colours in colour map and number of values in image must match to colourise")
+
+    # Display and save image methods
 
     def displayImage(self):
         if self.__ditheredImageArray is not None:
-            plt.imshow(self.__ditheredImageArray[:, :], cmap='gray')
+            if len(self.__ditheredImageArray.shape) == 2:
+                plt.imshow(self.__ditheredImageArray[:, :], cmap='gray')
+            elif len(self.__ditheredImageArray.shape) == 3:
+                plt.imshow(self.__ditheredImageArray.astype(np.uint8))
             plt.show()
+        else:
+            warnings.warn("An image must be dithered first to be displayed") 
 
     def saveImage(self):
         if self.__ditheredImageArray is not None:
             Image.fromarray(self.__ditheredImageArray.astype(np.uint8)).save(self.fileName)
+        else:
+            warnings.warn("An image must be dithered first to be saved") 
