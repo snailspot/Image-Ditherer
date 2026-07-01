@@ -1,7 +1,13 @@
     #OS junk files
     [Tt]humbs.db
     *.DS_Store
-    
+
+    # NJit cache
+    __pycache__/
+    *.py[cod]
+    *.nbi
+    *.nbc
+
     #Visual Studio files
     *.[Oo]bj
     *.user

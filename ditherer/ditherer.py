@@ -32,12 +32,12 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0):
+    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
-            values = values if colourMap is None else int(colourMap.size / 3)
+            values = values if colourMap is None else colourMap.size // 3
             # Adjust pixel size and dither
             if pixelSize > 1: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
@@ -49,12 +49,12 @@ class ImageDitherer():
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
 
             # Apply colour map
-            if colourMap is not None:
+            if colourMap is not None and colourMap.size//3 >= 2:
                 self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
             
             # Apply Bloom
-            if bloomLevel > 0:
-                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
+            if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
+                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
             
             
 
@@ -143,18 +143,20 @@ class ImageDitherer():
         return np.where(mask, 255, 0)
 
     @staticmethod
-    @njit(parallel = True, cache=True)
-    def addBloom(pixArray, bloomLevel, thresholdMap):
-        bloomFactor = (259 * (bloomLevel + 255)/(255 * (259 - bloomLevel)))
+    @njit(cache=True, fastmath=True)
+    def addBloom(pixArray, bloomLevel, bloomSpread, thresholdMap):
+        bloomFactor = np.array([0.29 * bloomLevel, 0.41 * bloomLevel, 0.23 * bloomLevel])
+        bloomAmountInner = bloomFactor*0.35
+        bloomAmountOuter = bloomFactor*0.11
         width, height, c = pixArray.shape
-        for y in prange(height):
+        bloomOuter = int(bloomSpread* 1.2)
+        bloomInner = int(bloomSpread* 0.45)
+        for y in range(height):
             for x in range(width):
                 if thresholdMap[x, y] == 255:
-                    pixArray[x, y] *= bloomFactor
-                    if x + 1 < width: pixArray[x + 1, y] *= bloomFactor
-                    if y + 1 < height: pixArray[x, y + 1] *= bloomFactor
-                    if y - 1 >= 0 : pixArray[x, y - 1] *= bloomFactor
-                    if x - 1 >= 0 : pixArray[x - 1, y] *= bloomFactor
+                    pixArray[x-bloomOuter:x+bloomOuter, y-bloomOuter:y+bloomOuter] += bloomAmountOuter
+                    pixArray[x-bloomInner:x+bloomInner, y-bloomInner:y+bloomInner] += bloomAmountInner
+ 
         return np.clip(pixArray, 0, 255)
 
 
