@@ -140,7 +140,7 @@ class ImageDitherer():
         
     def __threshold(self, pixArray, value):
         mask = np.all(pixArray > value, axis=-1)
-        return np.where(mask, 255, 0)
+        return np.where(mask, 1, 0).astype(np.uint8)
 
     @staticmethod
     @njit(cache=True, fastmath=True)
@@ -148,16 +148,18 @@ class ImageDitherer():
         bloomFactor = np.array([0.29 * bloomLevel, 0.41 * bloomLevel, 0.23 * bloomLevel])
         bloomAmountInner = bloomFactor*0.35
         bloomAmountOuter = bloomFactor*0.11
-        width, height, c = pixArray.shape
         bloomOuter = int(bloomSpread* 1.2)
         bloomInner = int(bloomSpread* 0.45)
-        for y in range(height):
-            for x in range(width):
-                if thresholdMap[x, y] == 255:
-                    pixArray[x-bloomOuter:x+bloomOuter, y-bloomOuter:y+bloomOuter] += bloomAmountOuter
-                    pixArray[x-bloomInner:x+bloomInner, y-bloomInner:y+bloomInner] += bloomAmountInner
+
+        pixelsToBloom = np.argwhere(thresholdMap == 1)
+        bloomArray = np.zeros_like(pixArray)
+        for pixel in pixelsToBloom:
+            x = pixel[0]
+            y = pixel[1]
+            bloomArray[x-bloomOuter:x+bloomOuter, y-bloomOuter:y+bloomOuter] += bloomAmountOuter
+            bloomArray[x-bloomInner:x+bloomInner, y-bloomInner:y+bloomInner] += bloomAmountInner
  
-        return np.clip(pixArray, 0, 255)
+        return np.clip(pixArray + bloomArray, 0, 255)
 
 
     # Display and save image methods
