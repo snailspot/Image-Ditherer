@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import QApplication
 app = QApplication(sys.argv)
 screen = ms.MainScreen()
 screen.show()
-app.exec()
+app.exec_()
 
 
 
