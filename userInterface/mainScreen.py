@@ -14,40 +14,69 @@ class NavBar(QWidget):
 class MainScreen(QMainWindow):
     __appHeight = 800
     __appWidth = 1200
-    backgroundColor = QColor(30,30,30)
+    backgroundColor = QColor(20,20,20)
     textColor = QColor(231, 231, 231)
 
     def __init__(self):
         super().__init__()
 
         outerLayout = QHBoxLayout()
+        centralWidget = QWidget()
+        centralWidget.setLayout(outerLayout)
+
         imgLayout = QVBoxLayout()
         menuLayout = QVBoxLayout()
         outerLayout.addLayout(imgLayout, 5)
         outerLayout.addLayout(menuLayout, 3)
 
-        navBarLayout = QHBoxLayout()
-        menuLayout.addLayout(navBarLayout)
-        navBarLayout.addWidget(self.__createPushButton("Settings", "SettingsButton"), 1)
-        navBarLayout.addWidget(self.__createPushButton("Dithering", "DitheringButton"), 1)
-        navBarLayout.addWidget(self.__createPushButton("Effects", "EffectsButton"), 1)
-        menuLayout.addStretch(1)
+        menuLayout.addLayout(self.__createNavBar(), 1)
+        menuLayout.addLayout(self.__createMenus(centralWidget), 8)
+        
         
         img = QLabel()
         img.setPixmap(QPixmap('output.png'))
         img.setScaledContents(False)
         imgLayout.addWidget(img, alignment=Qt.AlignHCenter)
 
-        centralWidget = QWidget()
-        centralWidget.setLayout(outerLayout)
+
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
         self.setStyleSheet(f"background-color: {self.backgroundColor.name()};")
         
+    def __createMenus(self, centralWidget):
+        stackedWidget = QStackedWidget(centralWidget)
+        page = QWidget()
+        page.setStyleSheet(f"background-color: rgb(100, 100, 180);")
+        page2 = QWidget()
+        page2.setStyleSheet(f"background-color: rgb(130, 100, 180);")
+        page3 = QWidget()
+        page3.setStyleSheet(f"background-color: rgb(100, 255, 180);")
+        stackedWidget.addWidget(page)
+        stackedWidget.addWidget(page2)
+        stackedWidget.addWidget(page3)
+        menus = QHBoxLayout()
+        menus.addWidget(stackedWidget)
+        index = 0
+        for button in self.buttonGroup.buttons():
+            button.clicked.connect(lambda checked, i=index: stackedWidget.setCurrentIndex(i))
+            index += 1
+        return menus
 
-
-
+    def __createNavBar(self):
+        buttons = []
+        buttons.append(self.__createPushButton("Settings", "SettingsButton"))
+        buttons.append(self.__createPushButton("Dithering", "DitheringButton"))
+        buttons.append(self.__createPushButton("Effects", "EffectsButton"))
+        self.buttonGroup = QButtonGroup(self)
+        self.buttonGroup.setExclusive(True)
+        navBarLayout = QHBoxLayout()
+        for button in buttons:
+            self.buttonGroup.addButton(button)
+            navBarLayout.addWidget(button, 1)
+        self.buttonGroup.buttons()[0].setChecked(True)
+        return navBarLayout
+        
     def __createPushButton(self, label, buttonName):
         styleSheet = f"""font: 11pt \"Cascadia Code\";
                         text-align: center;
@@ -57,6 +86,7 @@ class MainScreen(QMainWindow):
         button.setStyleSheet(styleSheet)
         button.setText(label)
         button.adjustSize()
+        button.setCheckable(True)
         return button
         
     
