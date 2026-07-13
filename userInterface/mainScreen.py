@@ -6,30 +6,58 @@ from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QRadialGradient)
 from PyQt5.QtWidgets import *
 
+class NavBar(QWidget):
+    def __init__(self, tab_names, stack: QStackedWidget):
+        super().__init__()
+        
+
 class MainScreen(QMainWindow):
     __appHeight = 800
     __appWidth = 1200
-    backgroundColor = QColor(48,48,48)
+    backgroundColor = QColor(30,30,30)
     textColor = QColor(231, 231, 231)
-    headerPoint = QPoint(0, 0)
-    headerSS =          f"""font: 20pt \"Cascadia Code Light\";
-                        color: {textColor.name()};
-                        padding-left: 20px;
-                        padding-top: 12px;"""
-            
-    subHeadingSS =      f"""font: 14pt \"Cascadia Code Light\";
-                        color: {textColor.name()};"""
 
     def __init__(self):
         super().__init__()
-        self.setFixedSize(QSize(self.__appWidth, self.__appHeight))
+
+        outerLayout = QHBoxLayout()
+        imgLayout = QVBoxLayout()
+        menuLayout = QVBoxLayout()
+        outerLayout.addLayout(imgLayout, 5)
+        outerLayout.addLayout(menuLayout, 3)
+
+        navBarLayout = QHBoxLayout()
+        menuLayout.addLayout(navBarLayout)
+        navBarLayout.addWidget(self.__createPushButton("Settings", "SettingsButton"), 1)
+        navBarLayout.addWidget(self.__createPushButton("Dithering", "DitheringButton"), 1)
+        navBarLayout.addWidget(self.__createPushButton("Effects", "EffectsButton"), 1)
+        menuLayout.addStretch(1)
+        
+        img = QLabel()
+        img.setPixmap(QPixmap('output.png'))
+        img.setScaledContents(False)
+        imgLayout.addWidget(img, alignment=Qt.AlignHCenter)
+
+        centralWidget = QWidget()
+        centralWidget.setLayout(outerLayout)
+        self.setCentralWidget(centralWidget)
+        self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
         self.setStyleSheet(f"background-color: {self.backgroundColor.name()};")
-        self.headerLabel = self.__createLabel(self.headerPoint, self.headerSS, "__dither_tool")
+        
 
-        self.preProcessingLabel = self.__createLabel(QPoint(680, 90), self.subHeadingSS, "_preprocessing")
-        self.ditherSettingLabel = self.__createLabel(QPoint(950, 90), self.subHeadingSS, "_dither_settings")
-        self.ditherSettingLabel = self.__createLabel(QPoint(680, 380), self.subHeadingSS, "_postprocessing")
+
+
+    def __createPushButton(self, label, buttonName):
+        styleSheet = f"""font: 11pt \"Cascadia Code\";
+                        text-align: center;
+                        color: {self.textColor.name()};"""
+        button = QPushButton(self)
+        button.setObjectName(buttonName)
+        button.setStyleSheet(styleSheet)
+        button.setText(label)
+        button.adjustSize()
+        return button
         
     
     def __createLabel(self, pos: QPoint, styleSheet, text):
