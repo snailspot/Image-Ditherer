@@ -16,8 +16,11 @@ class NavBar(QWidget):
 class MainScreen(QMainWindow):
     __appHeight = 800
     __appWidth = 1200
-    backgroundColor = QColor(20,20,20)
-    textColor = QColor(231, 231, 231)
+    __backgroundColor = QColor(20,20,20)
+    __textColor = QColor(231, 231, 231)
+    __menuTopSpacing = 100
+    __menuBetweenStretch = 1
+    __menuBottomStretch = 4
 
     def __init__(self):
         super().__init__()
@@ -37,7 +40,7 @@ class MainScreen(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
-        self.setStyleSheet(f"background-color: {self.backgroundColor.name()};")
+        self.setStyleSheet(f"background-color: {self.__backgroundColor.name()};")
         
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
@@ -76,33 +79,57 @@ class MainScreen(QMainWindow):
         settingsPage = QWidget()
         pageLayout = QVBoxLayout()
         settingsPage.setLayout(pageLayout)
-
-        pageLayout.addStretch(1)
+        pageLayout.addSpacing(self.__menuTopSpacing)
         
         contrastLabel = self.__createLabel("Contrast", "ContrastLabel")
         contrastSlider = self.__createSlider("ContrastSlider", d.MIN_CONTRAST, d.MAX_CONTRAST, int((d.MAX_CONTRAST + d.MIN_CONTRAST) / 2), settingsPage.width())
         pageLayout.addWidget(contrastLabel, 0)
         pageLayout.addWidget(contrastSlider, 0, alignment=Qt.AlignHCenter)
-        pageLayout.addStretch(1)
+        pageLayout.addStretch(self.__menuBetweenStretch)
 
         brightnessLabel = self.__createLabel("Brightness", "BrightnessLabel")
         brightnessSlider = self.__createSlider("BrightnessSlider", d.MIN_BRIGHTNESS, d.MAX_BRIGHTNESS, int((d.MIN_BRIGHTNESS + d.MAX_BRIGHTNESS) / 2), settingsPage.width())
         pageLayout.addWidget(brightnessLabel, 0)
         pageLayout.addWidget(brightnessSlider, 0, alignment=Qt.AlignHCenter)
-        pageLayout.addStretch(4)
 
+        pageLayout.addStretch(self.__menuBottomStretch)        
         return settingsPage
 
     def __createDitheringPage(self):
         ditheringPage = QWidget()
         pageLayout = QVBoxLayout()
         ditheringPage.setLayout(pageLayout)
+        pageLayout.addSpacing(self.__menuTopSpacing)
 
+        ditherOptionsLabel = self.__createLabel("Dithering Algorithms", "DitherOptionsLabel")
+        ditherOptions = self.__createDitheringOptions(ditheringPage.width())
+        pageLayout.addWidget(ditherOptionsLabel, 0)
+        pageLayout.addSpacing(40)
+        pageLayout.addWidget(ditherOptions, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(self.__menuBetweenStretch)
+
+        noiseLabel = self.__createLabel("Noise", "NoiseLabel")
+        noiseSlider = self.__createSlider("NoiseSlider", d.MIN_NOISE, d.MAX_NOISE, d.MIN_NOISE, ditheringPage.width())
+        pageLayout.addWidget(noiseLabel, 0)
+        pageLayout.addWidget(noiseSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(self.__menuBetweenStretch)
+
+        valuesLabel = self.__createLabel("Values", "ValuesLabel")
+        valuesSlider = self.__createSlider("ValuesSlider", d.MIN_VALUES, d.MAX_VALUES, d.MIN_VALUES, ditheringPage.width())
+        valuesSlider.setPageStep(1)
+        pageLayout.addWidget(valuesLabel, 0)
+        pageLayout.addWidget(valuesSlider, 0, alignment=Qt.AlignHCenter)
+
+        pageLayout.addStretch(self.__menuBottomStretch)
         return ditheringPage
 
     def __createEffectsPage(self):
         effectsPage = QWidget()
-
+        pageLayout = QVBoxLayout()
+        effectsPage.setLayout(pageLayout)
+        pageLayout.addSpacing(self.__menuTopSpacing)
+        
+        
         return effectsPage
 
     def __createNavBar(self):
@@ -123,7 +150,7 @@ class MainScreen(QMainWindow):
     def __createPushButton(self, label, buttonName):
         styleSheet = f"""font: 11pt \"Cascadia Code\";
                         text-align: center;
-                        color: {self.textColor.name()};"""
+                        color: {self.__textColor.name()};"""
         button = QPushButton(self)
         button.setObjectName(buttonName)
         button.setStyleSheet(styleSheet)
@@ -144,7 +171,7 @@ class MainScreen(QMainWindow):
     def __createLabel(self, text, labelName):
         styleSheet = f"""font: 13pt \"Cascadia Code\";
                         text-align: center;
-                        color: {self.textColor.name()};"""
+                        color: {self.__textColor.name()};"""
         label = QLabel(self)
         label.setObjectName(labelName)
         label.setStyleSheet(styleSheet)
@@ -152,3 +179,15 @@ class MainScreen(QMainWindow):
         label.setAlignment(Qt.AlignHCenter)
         label.adjustSize() 
         return label
+
+    def __createDitheringOptions(self, width):
+        styleSheet = f"""font: 13pt \"Cascadia Code\";
+                text-align: center;
+                color: {self.__textColor.name()};"""
+        ditherOptions = QComboBox()
+        ditherOptions.addItems(["Bayer's 2x2", "Bayer's 4x4", "Floyd Steinberg", "Atkinson", "Vertical Diffusion"])
+        ditherOptions.setObjectName("DitherOptionsComboBox")
+        ditherOptions.setMinimumWidth(int(width * 0.42))
+        ditherOptions.setMaximumWidth(int(width * 0.42))
+        ditherOptions.setStyleSheet(styleSheet)
+        return ditherOptions

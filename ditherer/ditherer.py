@@ -11,7 +11,11 @@ MIN_CONTRAST = -255
 MAX_BRIGHTNESS = 255
 MIN_BRIGHTNESS = -255
 MAX_NOISE = 100
+MIN_NOISE = 0
 MAX_PIXEL_SIZE = 10
+MIN_PIXEL_SIZE = 1
+MAX_VALUES = 6
+MIN_VALUES = 2
 MAX_THRESHOLD = 90
 
 class ImageDitherer():
@@ -33,20 +37,20 @@ class ImageDitherer():
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=2, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
+    def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
             if self.__imageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
                 self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
             values = values if colourMap is None else colourMap.size // 3
             # Adjust pixel size and dither
-            if pixelSize > 1: 
+            if pixelSize > MIN_PIXEL_SIZE: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
-                if noiseLevel > 0: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
+                if noiseLevel > MIN_NOISE: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
                 self.__ditheredImageArray = self.__resetSize(self.__ditheredImageArray, pixelSize)
             else:
-                if noiseLevel > 0: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
+                if noiseLevel > MIN_NOISE: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
 
             # Apply colour map
@@ -76,13 +80,13 @@ class ImageDitherer():
 
     def __resizeImage(self, image):
         width, height = image.size
-        if width > self.__MAX_DIMENSIONS or height > self.__MAX_DIMENSIONS:
+        if width > MAX_DIMENSIONS or height > MAX_DIMENSIONS:
             if width > height:
-                height = int(height * (self.__MAX_DIMENSIONS / width))
-                width = self.__MAX_DIMENSIONS
+                height = int(height * (MAX_DIMENSIONS / width))
+                width = MAX_DIMENSIONS
             else:
-                width = int(width * (self.__MAX_DIMENSIONS / height))
-                height = self.__MAX_DIMENSIONS
+                width = int(width * (MAX_DIMENSIONS / height))
+                height = MAX_DIMENSIONS
             image = image.resize((width, height), Image.BICUBIC)
         return image
     
@@ -90,8 +94,8 @@ class ImageDitherer():
     
     def adjustImage(self, brightnessLevel=0, contrastLevel=0):
         self.__imageArray = np.copy(self.__baseImageArray)
-        brightnessLevel = max(self.__MIN_BRIGHTNESS, min(self.__MAX_BRIGHTNESS, brightnessLevel))
-        contrastLevel = max(self.__MIN_CONTRAST, min(self.__MAX_CONTRAST, contrastLevel))
+        brightnessLevel = max(MIN_BRIGHTNESS, min(MAX_BRIGHTNESS, brightnessLevel))
+        contrastLevel = max(MIN_CONTRAST, min(MAX_CONTRAST, contrastLevel))
         contrastFactor = (259 * (contrastLevel + 255)/(255 * (259 - contrastLevel)))
         self.__applyContrastBrightness(self.__imageArray, brightnessLevel, contrastFactor)
     
@@ -108,7 +112,7 @@ class ImageDitherer():
     # Dither processing methods
 
     def __resizePixels(self, pixArray, pixelSize):
-        pixelSize = min(self.__MAX_PIXEL_SIZE, pixelSize)
+        pixelSize = min(MAX_PIXEL_SIZE, pixelSize)
         return pixArray[::pixelSize, ::pixelSize]
 
     def __resetSize(self, pixArray, pixelSize):
@@ -128,7 +132,7 @@ class ImageDitherer():
     
     def __addNoise(self, pixArray, noiseLevel, out=None):
         width, height = pixArray.shape
-        noiseLevel =  min(self.__MAX_NOISE, noiseLevel)  / self.__MAX_NOISE * 20
+        noiseLevel =  min(MAX_NOISE, noiseLevel)  / MAX_NOISE * 20
         noise = np.random.normal(0, noiseLevel, pixArray.size)
         noise = np.reshape(noise, (width, height))
         imageWithNoise = np.clip((pixArray + noise), 0, 255)
