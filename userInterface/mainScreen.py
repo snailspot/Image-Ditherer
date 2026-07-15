@@ -5,6 +5,8 @@ from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
     QRadialGradient)
 from PyQt5.QtWidgets import *
+from ditherer import ditherer as d
+from ditherer import ditherAlgorithm as da
 
 class NavBar(QWidget):
     def __init__(self, tab_names, stack: QStackedWidget):
@@ -31,7 +33,7 @@ class MainScreen(QMainWindow):
 
         menuLayout.addLayout(self.__createNavBar(), 0)
         menuLayout.addLayout(self.__createMenus(centralWidget), 1)
-        
+
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
@@ -56,15 +58,12 @@ class MainScreen(QMainWindow):
     
     def __createMenus(self, centralWidget):
         stackedWidget = QStackedWidget(centralWidget)
-        page = QWidget()
-        page.setStyleSheet(f"background-color: rgb(100, 100, 180);")
-        page2 = QWidget()
-        page2.setStyleSheet(f"background-color: rgb(130, 100, 180);")
-        page3 = QWidget()
-        page3.setStyleSheet(f"background-color: rgb(100, 255, 180);")
-        stackedWidget.addWidget(page)
-        stackedWidget.addWidget(page2)
-        stackedWidget.addWidget(page3)
+        settings = self.__createSettingsPage()
+        dithering = self.__createDitheringPage()
+        effects = self.__createEffectsPage()
+        stackedWidget.addWidget(settings)
+        stackedWidget.addWidget(dithering)
+        stackedWidget.addWidget(effects)
         menus = QHBoxLayout()
         menus.addWidget(stackedWidget)
         index = 0
@@ -72,6 +71,39 @@ class MainScreen(QMainWindow):
             button.clicked.connect(lambda checked, i=index: stackedWidget.setCurrentIndex(i))
             index += 1
         return menus
+    
+    def __createSettingsPage(self):
+        settingsPage = QWidget()
+        pageLayout = QVBoxLayout()
+        settingsPage.setLayout(pageLayout)
+
+        pageLayout.addStretch(1)
+        
+        contrastLabel = self.__createLabel("Contrast", "ContrastLabel")
+        contrastSlider = self.__createSlider("ContrastSlider", d.MIN_CONTRAST, d.MAX_CONTRAST, int((d.MAX_CONTRAST + d.MIN_CONTRAST) / 2), settingsPage.width())
+        pageLayout.addWidget(contrastLabel, 0)
+        pageLayout.addWidget(contrastSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(1)
+
+        brightnessLabel = self.__createLabel("Brightness", "BrightnessLabel")
+        brightnessSlider = self.__createSlider("BrightnessSlider", d.MIN_BRIGHTNESS, d.MAX_BRIGHTNESS, int((d.MIN_BRIGHTNESS + d.MAX_BRIGHTNESS) / 2), settingsPage.width())
+        pageLayout.addWidget(brightnessLabel, 0)
+        pageLayout.addWidget(brightnessSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(4)
+
+        return settingsPage
+
+    def __createDitheringPage(self):
+        ditheringPage = QWidget()
+        pageLayout = QVBoxLayout()
+        ditheringPage.setLayout(pageLayout)
+
+        return ditheringPage
+
+    def __createEffectsPage(self):
+        effectsPage = QWidget()
+
+        return effectsPage
 
     def __createNavBar(self):
         buttons = []
@@ -99,12 +131,24 @@ class MainScreen(QMainWindow):
         button.adjustSize()
         return button
         
+    def __createSlider(self, sliderName, minValue, maxValue, initValue, width):
+        slider = QSlider()
+        slider.setObjectName(sliderName)
+        slider.setMinimumWidth(int(width * 0.6))
+        slider.setMinimum(minValue)
+        slider.setMaximum(maxValue)
+        slider.setValue(initValue)
+        slider.setOrientation(Qt.Horizontal)
+        return slider
     
-    def __createLabel(self, pos: QPoint, styleSheet, text):
+    def __createLabel(self, text, labelName):
+        styleSheet = f"""font: 13pt \"Cascadia Code\";
+                        text-align: center;
+                        color: {self.textColor.name()};"""
         label = QLabel(self)
-        label.setObjectName(u"Hero Header")
-        label.move(pos)
+        label.setObjectName(labelName)
         label.setStyleSheet(styleSheet)
         label.setText(text)
+        label.setAlignment(Qt.AlignHCenter)
         label.adjustSize() 
         return label

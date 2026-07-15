@@ -5,16 +5,17 @@ from numba import njit, prange
 from .ditherAlgorithm import DitherAlgorithm
 import warnings
 
+MAX_DIMENSIONS = 800
+MAX_CONTRAST = 255
+MIN_CONTRAST = -255
+MAX_BRIGHTNESS = 255
+MIN_BRIGHTNESS = -255
+MAX_NOISE = 100
+MAX_PIXEL_SIZE = 10
+MAX_THRESHOLD = 90
+
 class ImageDitherer():
     fileName = r"output.png"
-    __MAX_DIMENSIONS = 800
-    __MAX_CONTRAST = 255
-    __MIN_CONTRAST = -255
-    __MAX_BRIGHTNESS = 255
-    __MIN_BRIGHTNESS = -255
-    __MAX_NOISE = 100
-    __MAX_PIXEL_SIZE = 10
-    __MAX_THRESHOLD = 90
     __imageArray = None
     __ditheredImageArray = None
     __baseImageArray = None
