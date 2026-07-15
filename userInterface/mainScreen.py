@@ -24,26 +24,36 @@ class MainScreen(QMainWindow):
         centralWidget = QWidget()
         centralWidget.setLayout(outerLayout)
 
-        imgLayout = QVBoxLayout()
+        imgLayout = self.__createImgLayout()
         menuLayout = QVBoxLayout()
         outerLayout.addLayout(imgLayout, 5)
         outerLayout.addLayout(menuLayout, 3)
 
-        menuLayout.addLayout(self.__createNavBar(), 1)
-        menuLayout.addLayout(self.__createMenus(centralWidget), 8)
+        menuLayout.addLayout(self.__createNavBar(), 0)
+        menuLayout.addLayout(self.__createMenus(centralWidget), 1)
         
-        
-        img = QLabel()
-        img.setPixmap(QPixmap('output.png'))
-        img.setScaledContents(False)
-        imgLayout.addWidget(img, alignment=Qt.AlignHCenter)
-
-
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
         self.setStyleSheet(f"background-color: {self.backgroundColor.name()};")
         
+    def __createImgLayout(self):
+        imgLayout = QVBoxLayout()
+        saveBtn = self.__createPushButton("save", "save")
+        loadBtn = self.__createPushButton("load", "load")
+        saveLoadLayout = QHBoxLayout()
+        saveLoadLayout.addWidget(loadBtn,0)
+        saveLoadLayout.addWidget(saveBtn,0)
+        saveLoadLayout.addStretch(1)
+        imgLayout.addLayout(saveLoadLayout, 0)
+
+        img = QLabel()
+        img.setPixmap(QPixmap('output.png'))
+        img.setScaledContents(False)
+        img.setAlignment(Qt.AlignCenter)
+        imgLayout.addWidget(img, 1)
+        return imgLayout
+    
     def __createMenus(self, centralWidget):
         stackedWidget = QStackedWidget(centralWidget)
         page = QWidget()
@@ -74,6 +84,7 @@ class MainScreen(QMainWindow):
         for button in buttons:
             self.buttonGroup.addButton(button)
             navBarLayout.addWidget(button, 1)
+            button.setCheckable(True)
         self.buttonGroup.buttons()[0].setChecked(True)
         return navBarLayout
         
@@ -86,7 +97,6 @@ class MainScreen(QMainWindow):
         button.setStyleSheet(styleSheet)
         button.setText(label)
         button.adjustSize()
-        button.setCheckable(True)
         return button
         
     
