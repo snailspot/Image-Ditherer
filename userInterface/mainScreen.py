@@ -5,6 +5,7 @@ from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
     QRadialGradient)
 from PyQt5.QtWidgets import *
+from pyqt_color_picker import ColorPickerDialog
 from ditherer import ditherer as d
 from ditherer import ditherAlgorithm as da
 
@@ -128,8 +129,24 @@ class MainScreen(QMainWindow):
         pageLayout = QVBoxLayout()
         effectsPage.setLayout(pageLayout)
         pageLayout.addSpacing(self.__menuTopSpacing)
+
+        # colourPicker = ColorPickerDialog(orientation='vertical')
+        # pageLayout.addWidget(colourPicker)
+
+        bloomIntensityLabel = self.__createLabel("Bloom Intensity", "BloomIntensityLabel")
+        bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
+        bloomIntensitySlider.setPageStep(d.MAX_BLOOM_LEVEL//5)
+        pageLayout.addWidget(bloomIntensityLabel, 0)
+        pageLayout.addWidget(bloomIntensitySlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(self.__menuBetweenStretch)
+
+        bloomSpreadLabel = self.__createLabel("Bloom Spread", "BloomSpreadLabel")
+        bloomSpreadSlider = self.__createSlider("BloomSpreadSlider", d.MIN_BLOOM_SPREAD, d.MAX_BLOOM_SPREAD, d.MIN_BLOOM_SPREAD, effectsPage.width())
+        bloomSpreadSlider.setPageStep(d.MAX_BLOOM_SPREAD//5)
+        pageLayout.addWidget(bloomSpreadLabel, 0)
+        pageLayout.addWidget(bloomSpreadSlider, 0, alignment=Qt.AlignHCenter)
         
-        
+        pageLayout.addStretch(self.__menuBottomStretch)
         return effectsPage
 
     def __createNavBar(self):

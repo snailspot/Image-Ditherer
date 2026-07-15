@@ -17,6 +17,10 @@ MIN_PIXEL_SIZE = 1
 MAX_VALUES = 6
 MIN_VALUES = 2
 MAX_THRESHOLD = 90
+MAX_BLOOM_LEVEL = 30
+MIN_BLOOM_LEVEL = 0
+MAX_BLOOM_SPREAD = 20
+MIN_BLOOM_SPREAD = 0
 
 class ImageDitherer():
     fileName = r"output.png"
