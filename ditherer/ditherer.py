@@ -40,12 +40,11 @@ class ImageDitherer():
             pass
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
-            self.__imageArray = self.__baseImageArray.copy()
+            self.__imageArray = np.copy(self.__baseImageArray)
 
     def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
-            if self.__imageArray is None:
+            if self.__baseImageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
-                self.__imageArray = np.copy(self.__baseImageArray)
             self.__ditheredImageArray = np.copy(self.__imageArray)
             values = values if colourMap is None else colourMap.size // 3
             # Adjust pixel size and dither

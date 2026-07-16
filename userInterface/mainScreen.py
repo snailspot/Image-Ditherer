@@ -65,8 +65,7 @@ class MainScreen(QMainWindow):
         imgLayout.addLayout(saveLoadLayout, 0)
 
         self.__img = QLabel()
-        pixmap = self.__getPixmap(self.__ditherer.dither(self.__chosenAlgorithm))
-        self.__img.setPixmap(pixmap)
+        self.__updatePixMap()
         self.__img.setScaledContents(False)
         self.__img.setAlignment(Qt.AlignCenter)
         imgLayout.addWidget(self.__img, 1)
@@ -241,17 +240,15 @@ class MainScreen(QMainWindow):
         ditherOptions.setStyleSheet(styleSheet)
         return ditherOptions
     
-    def __updatePixMap(self, filePath: None):
+    def __updatePixMap(self, filePath= None):
         if filePath:
             self.__ditherer.loadImage(filePath)
-        self.__img.setPixmap(self.__getPixmap(self.__ditherer.dither(self.__chosenAlgorithm)))
 
-    def __getPixmap(self, imgArray: np.ndarray):
-        imgArray = np.ascontiguousarray(imgArray.astype(np.uint8))
+        imgArray = np.ascontiguousarray(self.__ditherer.dither(self.__chosenAlgorithm).astype(np.uint8))
         height, width = imgArray.shape[:2]
-
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
         else:
             image = QImage(imgArray.data, width, height, width*3, QImage.Format_RGB888)
-        return QPixmap.fromImage(image.copy())
+        pixmap = QPixmap.fromImage(image.copy())
+        self.__img.setPixmap(pixmap)
