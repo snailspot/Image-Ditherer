@@ -40,6 +40,7 @@ class ImageDitherer():
             pass
         if validFile:
             self.__baseImageArray = self.__formatImage(image)
+            self.__imageArray = self.__baseImageArray.copy()
 
     def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
             if self.__imageArray is None:
@@ -56,7 +57,7 @@ class ImageDitherer():
             else:
                 if noiseLevel > MIN_NOISE: self.__addNoise(self.__ditheredImageArray, noiseLevel, out=self.__ditheredImageArray)
                 ditherMethod.ditherImage(self.__ditheredImageArray, values, valueThresholds, out=self.__ditheredImageArray)
-
+            
             # Apply colour map
             if colourMap is not None and colourMap.size//3 >= 2:
                 self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
@@ -64,6 +65,9 @@ class ImageDitherer():
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
                 self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
+            print(id(self.__ditheredImageArray))
+            print(self.__ditheredImageArray.shape)
+            return self.__ditheredImageArray
             
             
 
@@ -183,9 +187,9 @@ class ImageDitherer():
         else:
             warnings.warn("An image must be dithered first to be displayed") 
 
-    def saveImage(self):
+    def saveImage(self, filepath):
         if self.__ditheredImageArray is not None:
-            Image.fromarray(self.__ditheredImageArray.astype(np.uint8)).save(self.fileName)
+            Image.fromarray(self.__ditheredImageArray.astype(np.uint8)).save(filepath if filepath else self.fileName)
         else:
             warnings.warn("An image must be dithered first to be saved") 
             

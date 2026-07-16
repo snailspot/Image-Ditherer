@@ -1,9 +1,10 @@
 import sys
+import numpy as np
 from PyQt5.QtCore import (QCoreApplication, QMetaObject, QObject, QPoint,
     QRect, QSize, QUrl, Qt)
 from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
-    QRadialGradient)
+    QRadialGradient, QImage)
 from PyQt5.QtWidgets import *
 from pyqt_color_picker import ColorPickerDialog
 from ditherer import ditherer as d
@@ -23,9 +24,17 @@ class MainScreen(QMainWindow):
     __menuBetweenStretch = 1
     __menuBottomStretch = 4
 
+    __ditherer = d.ImageDitherer()
+    __bayer2x2 = da.BayerOrdered()
+    __bayer4x4 = da.BayerOrdered().setMatrixSize(2)
+    __floydStien = da.FloydSteinberg()
+    __atkinson = da.AtkinsonDithering()
+    __vert = da.VerticalDiffusionDithering()
+
+
     def __init__(self):
         super().__init__()
-
+        self.__chosenAlgorithm = self.__bayer2x2
         outerLayout = QHBoxLayout()
         centralWidget = QWidget()
         centralWidget.setLayout(outerLayout)
@@ -46,19 +55,42 @@ class MainScreen(QMainWindow):
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
         saveBtn = self.__createPushButton("save", "save")
+        saveBtn.clicked.connect(self.__saveFileDialog)
         loadBtn = self.__createPushButton("load", "load")
+        loadBtn.clicked.connect(self.__loadFileDialog)
         saveLoadLayout = QHBoxLayout()
         saveLoadLayout.addWidget(loadBtn,0)
         saveLoadLayout.addWidget(saveBtn,0)
         saveLoadLayout.addStretch(1)
         imgLayout.addLayout(saveLoadLayout, 0)
 
-        img = QLabel()
-        img.setPixmap(QPixmap('output.png'))
-        img.setScaledContents(False)
-        img.setAlignment(Qt.AlignCenter)
-        imgLayout.addWidget(img, 1)
+        self.__img = QLabel()
+        pixmap = self.__getPixmap(self.__ditherer.dither(self.__chosenAlgorithm))
+        self.__img.setPixmap(pixmap)
+        self.__img.setScaledContents(False)
+        self.__img.setAlignment(Qt.AlignCenter)
+        imgLayout.addWidget(self.__img, 1)
         return imgLayout
+    
+    def __loadFileDialog(self):
+        filename, _ = QFileDialog.getOpenFileName(
+        self,
+        "Select a File",
+        "",
+        "Images (*.png *.jpg)"
+        )
+        if filename:
+            self.__updatePixMap(str(filename))
+    
+    def __saveFileDialog(self):
+        filename, _ = QFileDialog.getSaveFileName(
+        self,
+        "Save image",
+        "ditheredImage",
+        "*.png"
+        )
+        if filename:
+            self.__ditherer.saveImage(str(filename))
     
     def __createMenus(self, centralWidget):
         stackedWidget = QStackedWidget(centralWidget)
@@ -208,3 +240,18 @@ class MainScreen(QMainWindow):
         ditherOptions.setMaximumWidth(int(width * 0.42))
         ditherOptions.setStyleSheet(styleSheet)
         return ditherOptions
+    
+    def __updatePixMap(self, filePath: None):
+        if filePath:
+            self.__ditherer.loadImage(filePath)
+        self.__img.setPixmap(self.__getPixmap(self.__ditherer.dither(self.__chosenAlgorithm)))
+
+    def __getPixmap(self, imgArray: np.ndarray):
+        imgArray = np.ascontiguousarray(imgArray.astype(np.uint8))
+        height, width = imgArray.shape[:2]
+
+        if imgArray.ndim == 2:
+            image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
+        else:
+            image = QImage(imgArray.data, width, height, width*3, QImage.Format_RGB888)
+        return QPixmap.fromImage(image.copy())
