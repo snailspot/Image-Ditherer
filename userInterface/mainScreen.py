@@ -36,10 +36,17 @@ class MainScreen(QMainWindow):
     __noise = d.MIN_NOISE
     __values = d.MIN_VALUES
     __pixelSize = d.MIN_PIXEL_SIZE
+    __bloomIntensity = d.MIN_BLOOM_LEVEL
+    __bloomSpread = d.MIN_BLOOM_SPREAD
 
 
     def __init__(self):
         super().__init__()
+        self.__sliderPause = QTimer()
+        self.__sliderPause.setSingleShot(True)
+        self.__sliderPause.setInterval(200)
+        self.__sliderPause.timeout.connect(self.__updatePixMap)
+
         self.__chosenAlgorithm = self.__bayer2x2
         outerLayout = QHBoxLayout()
         centralWidget = QWidget()
@@ -84,6 +91,8 @@ class MainScreen(QMainWindow):
         "",
         "Images (*.png *.jpg)"
         )
+
+        # TODO REST SLIDERS WHEN LOADING A NEW IMAGE
         if filename:
             self.__updatePixMap(str(filename))
     
@@ -187,6 +196,7 @@ class MainScreen(QMainWindow):
         bloomIntensityLabel = self.__createLabel("Bloom Intensity", "BloomIntensityLabel")
         bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
         bloomIntensitySlider.setPageStep(d.MAX_BLOOM_LEVEL//5)
+        bloomIntensitySlider.valueChanged.connect(lambda value: self.__setBloomIntensity(value))
         pageLayout.addWidget(bloomIntensityLabel, 0)
         pageLayout.addWidget(bloomIntensitySlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
@@ -194,6 +204,7 @@ class MainScreen(QMainWindow):
         bloomSpreadLabel = self.__createLabel("Bloom Spread", "BloomSpreadLabel")
         bloomSpreadSlider = self.__createSlider("BloomSpreadSlider", d.MIN_BLOOM_SPREAD, d.MAX_BLOOM_SPREAD, d.MIN_BLOOM_SPREAD, effectsPage.width())
         bloomSpreadSlider.setPageStep(d.MAX_BLOOM_SPREAD//5)
+        bloomSpreadSlider.valueChanged.connect(lambda value: self.__setBloomSpread(value))
         pageLayout.addWidget(bloomSpreadLabel, 0)
         pageLayout.addWidget(bloomSpreadSlider, 0, alignment=Qt.AlignHCenter)
         
@@ -268,8 +279,8 @@ class MainScreen(QMainWindow):
         
         imgArray = np.ascontiguousarray(self.__ditherer.dither(self.__chosenAlgorithm, \
                                                                brightness=self.__brightness, contrast=self.__contrast, \
-                                                               noiseLevel=self.__noise, values=self.__values, pixelSize=self.__pixelSize \
-                                                                ).astype(np.uint8))
+                                                               noiseLevel=self.__noise, values=self.__values, pixelSize=self.__pixelSize, \
+                                                               bloomLevel=self.__bloomIntensity, bloomSpread=self.__bloomSpread ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
@@ -280,20 +291,28 @@ class MainScreen(QMainWindow):
     
     def __setBrightness(self, value):
         self.__brightness = value
-        self.__updatePixMap()
+        self.__sliderPause.start()
     
     def __setContrast(self, value):
         self.__contrast = value
-        self.__updatePixMap()
+        self.__sliderPause.start()
 
     def __setNoise(self, value):
         self.__noise = value
-        self.__updatePixMap()
+        self.__sliderPause.start()
 
     def __setValues(self, value):
         self.__values = value
-        self.__updatePixMap()
+        self.__sliderPause.start()
     
     def __setPixelSize(self, value):
         self.__pixelSize = value
-        self.__updatePixMap()
+        self.__sliderPause.start()
+        
+    def __setBloomIntensity(self, value):
+        self.__bloomIntensity = value
+        self.__sliderPause.start()
+    
+    def __setBloomSpread(self, value):
+        self.__bloomSpread = value
+        self.__sliderPause.start()
