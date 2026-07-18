@@ -42,9 +42,10 @@ class ImageDitherer():
             self.__baseImageArray = self.__formatImage(image)
             self.__imageArray = np.copy(self.__baseImageArray)
 
-    def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1):
+    def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1, contrast=0, brightness=0):
             if self.__baseImageArray is None:
                 self.loadImage(r"assets\testInputColour.png")
+            self.__adjustImage(brightness, contrast)
             self.__ditheredImageArray = np.copy(self.__imageArray)
             values = values if colourMap is None else colourMap.size // 3
             # Adjust pixel size and dither
@@ -64,8 +65,6 @@ class ImageDitherer():
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
                 self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
-            print(id(self.__ditheredImageArray))
-            print(self.__ditheredImageArray.shape)
             return self.__ditheredImageArray
             
             
@@ -99,7 +98,7 @@ class ImageDitherer():
     
     # Image adjustment methods
     
-    def adjustImage(self, brightnessLevel=0, contrastLevel=0):
+    def __adjustImage(self, brightnessLevel=0, contrastLevel=0):
         self.__imageArray = np.copy(self.__baseImageArray)
         brightnessLevel = max(MIN_BRIGHTNESS, min(MAX_BRIGHTNESS, brightnessLevel))
         contrastLevel = max(MIN_CONTRAST, min(MAX_CONTRAST, contrastLevel))

@@ -19,7 +19,7 @@ vd = da.VerticalDiffusionDithering()
 
 # ed.loadImage(filepath)
 # bo.setMatrixSize(3)
-# ed.adjustImage(70, contrastLevel=100)
+# ed.adjustImage(0, 0)
 # ed.dither(vd, pixelSize=3, colourMap=colourPinkMap, bloomSpread=10, bloomLevel=10)
 # ed.displayImage()
 

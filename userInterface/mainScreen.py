@@ -1,7 +1,7 @@
 import sys
 import numpy as np
 from PyQt5.QtCore import (QCoreApplication, QMetaObject, QObject, QPoint,
-    QRect, QSize, QUrl, Qt)
+    QRect, QSize, QUrl, Qt, QTimer)
 from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
     QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
     QRadialGradient, QImage)
@@ -30,6 +30,12 @@ class MainScreen(QMainWindow):
     __floydStien = da.FloydSteinberg()
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
+
+    __contrast = d.MAX_CONTRAST + d.MIN_BRIGHTNESS
+    __brightness = d.MAX_BRIGHTNESS + d.MIN_BRIGHTNESS
+    __noise = d.MIN_NOISE
+    __values = d.MIN_VALUES
+    __pixelSize = d.MIN_PIXEL_SIZE
 
 
     def __init__(self):
@@ -112,15 +118,17 @@ class MainScreen(QMainWindow):
         pageLayout = QVBoxLayout()
         settingsPage.setLayout(pageLayout)
         pageLayout.addSpacing(self.__menuTopSpacing)
-        
+
         contrastLabel = self.__createLabel("Contrast", "ContrastLabel")
         contrastSlider = self.__createSlider("ContrastSlider", d.MIN_CONTRAST, d.MAX_CONTRAST, int((d.MAX_CONTRAST + d.MIN_CONTRAST) / 2), settingsPage.width())
+        contrastSlider.valueChanged.connect(lambda value: self.__setContrast(value))
         pageLayout.addWidget(contrastLabel, 0)
         pageLayout.addWidget(contrastSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         brightnessLabel = self.__createLabel("Brightness", "BrightnessLabel")
         brightnessSlider = self.__createSlider("BrightnessSlider", d.MIN_BRIGHTNESS, d.MAX_BRIGHTNESS, int((d.MIN_BRIGHTNESS + d.MAX_BRIGHTNESS) / 2), settingsPage.width())
+        brightnessSlider.valueChanged.connect(lambda value: self.__setBrightness(value))
         pageLayout.addWidget(brightnessLabel, 0)
         pageLayout.addWidget(brightnessSlider, 0, alignment=Qt.AlignHCenter)
 
@@ -142,6 +150,7 @@ class MainScreen(QMainWindow):
 
         noiseLabel = self.__createLabel("Noise", "NoiseLabel")
         noiseSlider = self.__createSlider("NoiseSlider", d.MIN_NOISE, d.MAX_NOISE, d.MIN_NOISE, ditheringPage.width())
+        noiseSlider.valueChanged.connect(lambda value: self.__setNoise(value))
         pageLayout.addWidget(noiseLabel, 0)
         pageLayout.addWidget(noiseSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
@@ -149,8 +158,19 @@ class MainScreen(QMainWindow):
         valuesLabel = self.__createLabel("Values", "ValuesLabel")
         valuesSlider = self.__createSlider("ValuesSlider", d.MIN_VALUES, d.MAX_VALUES, d.MIN_VALUES, ditheringPage.width())
         valuesSlider.setPageStep(1)
+        valuesSlider.setSingleStep(1)
+        valuesSlider.valueChanged.connect(lambda value: self.__setValues(value))
         pageLayout.addWidget(valuesLabel, 0)
         pageLayout.addWidget(valuesSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(self.__menuBetweenStretch)
+
+        pixelLabel = self.__createLabel("Pixel Size", "PixelsLabel")
+        pixelSlider = self.__createSlider("PixelSlider", d.MIN_PIXEL_SIZE, d.MAX_PIXEL_SIZE, d.MIN_PIXEL_SIZE, ditheringPage.width())
+        pixelSlider.setPageStep(1)
+        pixelSlider.setSingleStep(1)
+        pixelSlider.valueChanged.connect(lambda value: self.__setPixelSize(value))
+        pageLayout.addWidget(pixelLabel, 0)
+        pageLayout.addWidget(pixelSlider, 0, alignment=Qt.AlignHCenter)
 
         pageLayout.addStretch(self.__menuBottomStretch)
         return ditheringPage
@@ -214,6 +234,8 @@ class MainScreen(QMainWindow):
         slider.setMaximum(maxValue)
         slider.setValue(initValue)
         slider.setOrientation(Qt.Horizontal)
+        slider.setPageStep((abs(minValue) + abs(maxValue))//20)
+        slider.setSingleStep((abs(minValue) + abs(maxValue))//20)
         return slider
     
     def __createLabel(self, text, labelName):
@@ -238,13 +260,16 @@ class MainScreen(QMainWindow):
         ditherOptions.setMinimumWidth(int(width * 0.42))
         ditherOptions.setMaximumWidth(int(width * 0.42))
         ditherOptions.setStyleSheet(styleSheet)
-        return ditherOptions
+        return ditherOptions    
     
     def __updatePixMap(self, filePath= None):
         if filePath:
             self.__ditherer.loadImage(filePath)
-
-        imgArray = np.ascontiguousarray(self.__ditherer.dither(self.__chosenAlgorithm).astype(np.uint8))
+        
+        imgArray = np.ascontiguousarray(self.__ditherer.dither(self.__chosenAlgorithm, \
+                                                               brightness=self.__brightness, contrast=self.__contrast, \
+                                                               noiseLevel=self.__noise, values=self.__values, pixelSize=self.__pixelSize \
+                                                                ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
@@ -252,3 +277,23 @@ class MainScreen(QMainWindow):
             image = QImage(imgArray.data, width, height, width*3, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(image.copy())
         self.__img.setPixmap(pixmap)
+    
+    def __setBrightness(self, value):
+        self.__brightness = value
+        self.__updatePixMap()
+    
+    def __setContrast(self, value):
+        self.__contrast = value
+        self.__updatePixMap()
+
+    def __setNoise(self, value):
+        self.__noise = value
+        self.__updatePixMap()
+
+    def __setValues(self, value):
+        self.__values = value
+        self.__updatePixMap()
+    
+    def __setPixelSize(self, value):
+        self.__pixelSize = value
+        self.__updatePixMap()
