@@ -16,8 +16,8 @@ class NavBar(QWidget):
         
 
 class MainScreen(QMainWindow):
-    __appHeight = 800
-    __appWidth = 1200
+    __appHeight = d.MAX_DIMENSIONS + 100
+    __appWidth = d.MAX_DIMENSIONS + 600
     __backgroundColor = QColor(20,20,20)
     __textColor = QColor(231, 231, 231)
     __menuTopSpacing = 100
@@ -32,15 +32,6 @@ class MainScreen(QMainWindow):
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
 
-    __contrast = d.MAX_CONTRAST + d.MIN_BRIGHTNESS
-    __brightness = d.MAX_BRIGHTNESS + d.MIN_BRIGHTNESS
-    __noise = d.MIN_NOISE
-    __values = d.MIN_VALUES
-    __pixelSize = d.MIN_PIXEL_SIZE
-    __bloomIntensity = d.MIN_BLOOM_LEVEL
-    __bloomSpread = d.MIN_BLOOM_SPREAD
-
-
     def __init__(self):
         super().__init__()
         self.__ditherPause = QTimer()
@@ -53,14 +44,15 @@ class MainScreen(QMainWindow):
         centralWidget = QWidget()
         centralWidget.setLayout(outerLayout)
 
-        imgLayout = self.__createImgLayout()
         menuLayout = QVBoxLayout()
-        outerLayout.addLayout(imgLayout, 5)
-        outerLayout.addLayout(menuLayout, 3)
-
         menuLayout.addLayout(self.__createNavBar(), 0)
         menuLayout.addLayout(self.__createMenus(centralWidget), 1)
         menuLayout.addLayout(self.__createLoadSaveButtons(), 0)
+
+        imgLayout = self.__createImgLayout()
+        
+        outerLayout.addLayout(imgLayout, 5)
+        outerLayout.addLayout(menuLayout, 3)
 
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
@@ -100,17 +92,15 @@ class MainScreen(QMainWindow):
         pageLayout.addSpacing(self.__menuTopSpacing)
 
         contrastLabel = self.__createLabel("Contrast", "ContrastLabel")
-        contrastSlider = self.__createSlider("ContrastSlider", d.MIN_CONTRAST, d.MAX_CONTRAST, int((d.MAX_CONTRAST + d.MIN_CONTRAST) / 2), settingsPage.width())
-        contrastSlider.valueChanged.connect(lambda value: self.__setContrast(value))
+        self.__contrastSlider = self.__createSlider("ContrastSlider", d.MIN_CONTRAST, d.MAX_CONTRAST, int((d.MAX_CONTRAST + d.MIN_CONTRAST) / 2), settingsPage.width())
         pageLayout.addWidget(contrastLabel, 0)
-        pageLayout.addWidget(contrastSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__contrastSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         brightnessLabel = self.__createLabel("Brightness", "BrightnessLabel")
-        brightnessSlider = self.__createSlider("BrightnessSlider", d.MIN_BRIGHTNESS, d.MAX_BRIGHTNESS, int((d.MIN_BRIGHTNESS + d.MAX_BRIGHTNESS) / 2), settingsPage.width())
-        brightnessSlider.valueChanged.connect(lambda value: self.__setBrightness(value))
+        self.__brightnessSlider = self.__createSlider("BrightnessSlider", d.MIN_BRIGHTNESS, d.MAX_BRIGHTNESS, int((d.MIN_BRIGHTNESS + d.MAX_BRIGHTNESS) / 2), settingsPage.width())
         pageLayout.addWidget(brightnessLabel, 0)
-        pageLayout.addWidget(brightnessSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__brightnessSlider, 0, alignment=Qt.AlignHCenter)
 
         pageLayout.addStretch(self.__menuBottomStretch)        
         return settingsPage
@@ -129,28 +119,25 @@ class MainScreen(QMainWindow):
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         noiseLabel = self.__createLabel("Noise", "NoiseLabel")
-        noiseSlider = self.__createSlider("NoiseSlider", d.MIN_NOISE, d.MAX_NOISE, d.MIN_NOISE, ditheringPage.width())
-        noiseSlider.valueChanged.connect(lambda value: self.__setNoise(value))
+        self.__noiseSlider = self.__createSlider("NoiseSlider", d.MIN_NOISE, d.MAX_NOISE, d.MIN_NOISE, ditheringPage.width())
         pageLayout.addWidget(noiseLabel, 0)
-        pageLayout.addWidget(noiseSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__noiseSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         valuesLabel = self.__createLabel("Values", "ValuesLabel")
-        valuesSlider = self.__createSlider("ValuesSlider", d.MIN_VALUES, d.MAX_VALUES, d.MIN_VALUES, ditheringPage.width())
-        valuesSlider.setPageStep(1)
-        valuesSlider.setSingleStep(1)
-        valuesSlider.valueChanged.connect(lambda value: self.__setValues(value))
+        self.__valuesSlider = self.__createSlider("ValuesSlider", d.MIN_VALUES, d.MAX_VALUES, d.MIN_VALUES, ditheringPage.width())
+        self.__valuesSlider.setPageStep(1)
+        self.__valuesSlider.setSingleStep(1)
         pageLayout.addWidget(valuesLabel, 0)
-        pageLayout.addWidget(valuesSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__valuesSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         pixelLabel = self.__createLabel("Pixel Size", "PixelsLabel")
-        pixelSlider = self.__createSlider("PixelSlider", d.MIN_PIXEL_SIZE, d.MAX_PIXEL_SIZE, d.MIN_PIXEL_SIZE, ditheringPage.width())
-        pixelSlider.setPageStep(1)
-        pixelSlider.setSingleStep(1)
-        pixelSlider.valueChanged.connect(lambda value: self.__setPixelSize(value))
+        self.__pixelSlider = self.__createSlider("PixelSlider", d.MIN_PIXEL_SIZE, d.MAX_PIXEL_SIZE, d.MIN_PIXEL_SIZE, ditheringPage.width())
+        self.__pixelSlider.setPageStep(1)
+        self.__pixelSlider.setSingleStep(1)
         pageLayout.addWidget(pixelLabel, 0)
-        pageLayout.addWidget(pixelSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__pixelSlider, 0, alignment=Qt.AlignHCenter)
 
         pageLayout.addStretch(self.__menuBottomStretch)
         return ditheringPage
@@ -165,19 +152,17 @@ class MainScreen(QMainWindow):
         # pageLayout.addWidget(colourPicker)
 
         bloomIntensityLabel = self.__createLabel("Bloom Intensity", "BloomIntensityLabel")
-        bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
-        bloomIntensitySlider.setPageStep(d.MAX_BLOOM_LEVEL//5)
-        bloomIntensitySlider.valueChanged.connect(lambda value: self.__setBloomIntensity(value))
+        self.__bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
+        self.__bloomIntensitySlider.setPageStep(d.MAX_BLOOM_LEVEL//5)
         pageLayout.addWidget(bloomIntensityLabel, 0)
-        pageLayout.addWidget(bloomIntensitySlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__bloomIntensitySlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
         bloomSpreadLabel = self.__createLabel("Bloom Spread", "BloomSpreadLabel")
-        bloomSpreadSlider = self.__createSlider("BloomSpreadSlider", d.MIN_BLOOM_SPREAD, d.MAX_BLOOM_SPREAD, d.MIN_BLOOM_SPREAD, effectsPage.width())
-        bloomSpreadSlider.setPageStep(d.MAX_BLOOM_SPREAD//5)
-        bloomSpreadSlider.valueChanged.connect(lambda value: self.__setBloomSpread(value))
+        self.__bloomSpreadSlider = self.__createSlider("BloomSpreadSlider", d.MIN_BLOOM_SPREAD, d.MAX_BLOOM_SPREAD, d.MIN_BLOOM_SPREAD, effectsPage.width())
+        self.__bloomSpreadSlider.setPageStep(d.MAX_BLOOM_SPREAD//5)
         pageLayout.addWidget(bloomSpreadLabel, 0)
-        pageLayout.addWidget(bloomSpreadSlider, 0, alignment=Qt.AlignHCenter)
+        pageLayout.addWidget(self.__bloomSpreadSlider, 0, alignment=Qt.AlignHCenter)
         
         pageLayout.addStretch(self.__menuBottomStretch)
         return effectsPage
@@ -218,6 +203,7 @@ class MainScreen(QMainWindow):
         # TODO REST SLIDERS WHEN LOADING A NEW IMAGE
         if filename:
             self.__updatePixMap(str(filename))
+            self.__resetSettings()
     
     def __saveFileDialog(self):
         filename, _ = QFileDialog.getSaveFileName(
@@ -250,6 +236,7 @@ class MainScreen(QMainWindow):
         slider.setOrientation(Qt.Horizontal)
         slider.setPageStep((abs(minValue) + abs(maxValue))//20)
         slider.setSingleStep((abs(minValue) + abs(maxValue))//20)
+        slider.valueChanged.connect(lambda value: self.__ditherPause.start())
         return slider
     
     def __createLabel(self, text, labelName):
@@ -282,9 +269,9 @@ class MainScreen(QMainWindow):
             self.__ditherer.loadImage(filePath)
         
         imgArray = np.ascontiguousarray(self.__ditherer.dither(ditherMethod=self.__chosenAlgorithm, \
-                                                               brightness=self.__brightness, contrast=self.__contrast, \
-                                                               noiseLevel=self.__noise, values=self.__values, pixelSize=self.__pixelSize, \
-                                                               bloomLevel=self.__bloomIntensity, bloomSpread=self.__bloomSpread ).astype(np.uint8))
+                                                               brightness=self.__brightnessSlider.value(), contrast=self.__contrastSlider.value(), \
+                                                               noiseLevel=self.__noiseSlider.value(), values=self.__valuesSlider.value(), pixelSize=self.__pixelSlider.value(), \
+                                                               bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
@@ -293,33 +280,17 @@ class MainScreen(QMainWindow):
         pixmap = QPixmap.fromImage(image.copy())
         self.__img.setPixmap(pixmap)
     
-    def __setBrightness(self, value):
-        self.__brightness = value
-        self.__ditherPause.start()
-    
-    def __setContrast(self, value):
-        self.__contrast = value
-        self.__ditherPause.start()
+    def __resetSettings(self):
+        self.__contrastSlider.setValue((d.MAX_CONTRAST + d.MIN_CONTRAST) // 2)
+        self.__brightnessSlider.setValue((d.MAX_BRIGHTNESS + d.MIN_BRIGHTNESS) //2)
 
-    def __setNoise(self, value):
-        self.__noise = value
-        self.__ditherPause.start()
+        self.__noiseSlider.setValue(d.MIN_NOISE)
+        self.__valuesSlider.setValue(d.MIN_VALUES)
+        self.__pixelSlider.setValue(d.MIN_PIXEL_SIZE)
 
-    def __setValues(self, value):
-        self.__values = value
-        self.__ditherPause.start()
-    
-    def __setPixelSize(self, value):
-        self.__pixelSize = value
-        self.__ditherPause.start()
-        
-    def __setBloomIntensity(self, value):
-        self.__bloomIntensity = value
-        self.__ditherPause.start()
-    
-    def __setBloomSpread(self, value):
-        self.__bloomSpread = value
-        self.__ditherPause.start()
+        self.__bloomIntensitySlider.setValue(d.MIN_BLOOM_LEVEL)
+        self.__bloomSpreadSlider.setValue(d.MIN_BLOOM_SPREAD)
+
     
     def __setDitherAlgorithm(self, value):
         match value:
