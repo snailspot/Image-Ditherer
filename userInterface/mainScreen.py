@@ -26,7 +26,8 @@ class MainScreen(QMainWindow):
 
     __ditherer = d.ImageDitherer()
     __bayer2x2 = da.BayerOrdered()
-    __bayer4x4 = da.BayerOrdered().setMatrixSize(2)
+    __bayer4x4 = da.BayerOrdered()
+    __bayer4x4.setMatrixSize(3)
     __floydStien = da.FloydSteinberg()
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
@@ -42,10 +43,10 @@ class MainScreen(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.__sliderPause = QTimer()
-        self.__sliderPause.setSingleShot(True)
-        self.__sliderPause.setInterval(200)
-        self.__sliderPause.timeout.connect(self.__updatePixMap)
+        self.__ditherPause = QTimer()
+        self.__ditherPause.setSingleShot(True)
+        self.__ditherPause.setInterval(200)
+        self.__ditherPause.timeout.connect(self.__updatePixMap)
 
         self.__chosenAlgorithm = self.__bayer2x2
         outerLayout = QHBoxLayout()
@@ -59,6 +60,7 @@ class MainScreen(QMainWindow):
 
         menuLayout.addLayout(self.__createNavBar(), 0)
         menuLayout.addLayout(self.__createMenus(centralWidget), 1)
+        menuLayout.addLayout(self.__createLoadSaveButtons(), 0)
 
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
@@ -67,15 +69,6 @@ class MainScreen(QMainWindow):
         
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
-        saveBtn = self.__createPushButton("save", "save")
-        saveBtn.clicked.connect(self.__saveFileDialog)
-        loadBtn = self.__createPushButton("load", "load")
-        loadBtn.clicked.connect(self.__loadFileDialog)
-        saveLoadLayout = QHBoxLayout()
-        saveLoadLayout.addWidget(loadBtn,0)
-        saveLoadLayout.addWidget(saveBtn,0)
-        saveLoadLayout.addStretch(1)
-        imgLayout.addLayout(saveLoadLayout, 0)
 
         self.__img = QLabel()
         self.__updatePixMap()
@@ -84,34 +77,12 @@ class MainScreen(QMainWindow):
         imgLayout.addWidget(self.__img, 1)
         return imgLayout
     
-    def __loadFileDialog(self):
-        filename, _ = QFileDialog.getOpenFileName(
-        self,
-        "Select a File",
-        "",
-        "Images (*.png *.jpg)"
-        )
-
-        # TODO REST SLIDERS WHEN LOADING A NEW IMAGE
-        if filename:
-            self.__updatePixMap(str(filename))
-    
-    def __saveFileDialog(self):
-        filename, _ = QFileDialog.getSaveFileName(
-        self,
-        "Save image",
-        "ditheredImage",
-        "*.png"
-        )
-        if filename:
-            self.__ditherer.saveImage(str(filename))
-    
     def __createMenus(self, centralWidget):
         stackedWidget = QStackedWidget(centralWidget)
-        settings = self.__createSettingsPage()
+        adjust = self.__createAdjustPage()
         dithering = self.__createDitheringPage()
         effects = self.__createEffectsPage()
-        stackedWidget.addWidget(settings)
+        stackedWidget.addWidget(adjust)
         stackedWidget.addWidget(dithering)
         stackedWidget.addWidget(effects)
         menus = QHBoxLayout()
@@ -122,7 +93,7 @@ class MainScreen(QMainWindow):
             index += 1
         return menus
     
-    def __createSettingsPage(self):
+    def __createAdjustPage(self):
         settingsPage = QWidget()
         pageLayout = QVBoxLayout()
         settingsPage.setLayout(pageLayout)
@@ -213,7 +184,7 @@ class MainScreen(QMainWindow):
 
     def __createNavBar(self):
         buttons = []
-        buttons.append(self.__createPushButton("Settings", "SettingsButton"))
+        buttons.append(self.__createPushButton("Adjust", "AdjustButton"))
         buttons.append(self.__createPushButton("Dithering", "DitheringButton"))
         buttons.append(self.__createPushButton("Effects", "EffectsButton"))
         self.buttonGroup = QButtonGroup(self)
@@ -225,6 +196,38 @@ class MainScreen(QMainWindow):
             button.setCheckable(True)
         self.buttonGroup.buttons()[0].setChecked(True)
         return navBarLayout
+    
+    def __createLoadSaveButtons(self):
+        saveBtn = self.__createPushButton("save", "save")
+        saveBtn.clicked.connect(self.__saveFileDialog)
+        loadBtn = self.__createPushButton("load", "load")
+        loadBtn.clicked.connect(self.__loadFileDialog)
+        saveLoadLayout = QHBoxLayout()
+        saveLoadLayout.addWidget(loadBtn,0)
+        saveLoadLayout.addWidget(saveBtn,0)
+        return saveLoadLayout
+    
+    def __loadFileDialog(self):
+        filename, _ = QFileDialog.getOpenFileName(
+        self,
+        "Select a File",
+        "",
+        "Images (*.png *.jpg)"
+        )
+
+        # TODO REST SLIDERS WHEN LOADING A NEW IMAGE
+        if filename:
+            self.__updatePixMap(str(filename))
+    
+    def __saveFileDialog(self):
+        filename, _ = QFileDialog.getSaveFileName(
+        self,
+        "Save image",
+        "ditheredImage",
+        "*.png"
+        )
+        if filename:
+            self.__ditherer.saveImage(str(filename))
         
     def __createPushButton(self, label, buttonName):
         styleSheet = f"""font: 11pt \"Cascadia Code\";
@@ -271,13 +274,14 @@ class MainScreen(QMainWindow):
         ditherOptions.setMinimumWidth(int(width * 0.42))
         ditherOptions.setMaximumWidth(int(width * 0.42))
         ditherOptions.setStyleSheet(styleSheet)
+        ditherOptions.currentTextChanged.connect(self.__setDitherAlgorithm)
         return ditherOptions    
     
     def __updatePixMap(self, filePath= None):
         if filePath:
             self.__ditherer.loadImage(filePath)
         
-        imgArray = np.ascontiguousarray(self.__ditherer.dither(self.__chosenAlgorithm, \
+        imgArray = np.ascontiguousarray(self.__ditherer.dither(ditherMethod=self.__chosenAlgorithm, \
                                                                brightness=self.__brightness, contrast=self.__contrast, \
                                                                noiseLevel=self.__noise, values=self.__values, pixelSize=self.__pixelSize, \
                                                                bloomLevel=self.__bloomIntensity, bloomSpread=self.__bloomSpread ).astype(np.uint8))
@@ -291,28 +295,42 @@ class MainScreen(QMainWindow):
     
     def __setBrightness(self, value):
         self.__brightness = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
     
     def __setContrast(self, value):
         self.__contrast = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
 
     def __setNoise(self, value):
         self.__noise = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
 
     def __setValues(self, value):
         self.__values = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
     
     def __setPixelSize(self, value):
         self.__pixelSize = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
         
     def __setBloomIntensity(self, value):
         self.__bloomIntensity = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
     
     def __setBloomSpread(self, value):
         self.__bloomSpread = value
-        self.__sliderPause.start()
+        self.__ditherPause.start()
+    
+    def __setDitherAlgorithm(self, value):
+        match value:
+            case "Bayer's 2x2":
+                self.__chosenAlgorithm = self.__bayer2x2
+            case "Bayer's 4x4": 
+                self.__chosenAlgorithm = self.__bayer4x4
+            case "Floyd Steinberg":
+                self.__chosenAlgorithm = self.__floydStien
+            case "Atkinson":
+                self.__chosenAlgorithm = self.__atkinson
+            case "Vertical Diffusion":
+                self.__chosenAlgorithm = self.__vert
+        self.__ditherPause.start()
