@@ -64,7 +64,7 @@ class ImageDitherer():
             
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
-                self.__ditheredImageArray = self.addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
+                self.__ditheredImageArray = self.__addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
             return self.__ditheredImageArray
             
             
@@ -118,7 +118,6 @@ class ImageDitherer():
     # Dither processing methods
 
     def __resizePixels(self, pixArray, pixelSize):
-        pixelSize = min(MAX_PIXEL_SIZE, pixelSize)
         return pixArray[::pixelSize, ::pixelSize]
 
     def __resetSize(self, pixArray, pixelSize):
@@ -155,7 +154,7 @@ class ImageDitherer():
 
     @staticmethod
     @njit(cache=True, fastmath=True)
-    def addBloom(pixArray, bloomLevel, bloomSpread, thresholdMap):
+    def __addBloom(pixArray, bloomLevel, bloomSpread, thresholdMap):
         bloomFactor = np.array([0.29 * bloomLevel, 0.41 * bloomLevel, 0.23 * bloomLevel])
         bloomAmountInner = bloomFactor*0.35
         bloomAmountOuter = bloomFactor*0.11

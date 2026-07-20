@@ -31,6 +31,7 @@ class MainScreen(QMainWindow):
     __floydStien = da.FloydSteinberg()
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
+    __currValues = 0
 
     def __init__(self):
         super().__init__()
@@ -128,6 +129,7 @@ class MainScreen(QMainWindow):
         self.__valuesSlider = self.__createSlider("ValuesSlider", d.MIN_VALUES, d.MAX_VALUES, d.MIN_VALUES, ditheringPage.width())
         self.__valuesSlider.setPageStep(1)
         self.__valuesSlider.setSingleStep(1)
+        self.__valuesSlider.valueChanged.connect(self.__createColourPickerButtons)
         pageLayout.addWidget(valuesLabel, 0)
         pageLayout.addWidget(self.__valuesSlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
@@ -148,8 +150,21 @@ class MainScreen(QMainWindow):
         effectsPage.setLayout(pageLayout)
         pageLayout.addSpacing(self.__menuTopSpacing)
 
-        # colourPicker = ColorPickerDialog(orientation='vertical')
-        # pageLayout.addWidget(colourPicker)
+        widget = QWidget()
+        widget.setFixedSize(QSize(300, 200))
+        self.__colourPickerLayout = QGridLayout()
+        COLS = 3
+        ROWS = 2
+        for col in range(COLS):
+            self.__colourPickerLayout.setColumnMinimumWidth(col, 75)
+        for row in range(ROWS):
+            self.__colourPickerLayout.setRowMinimumHeight(row, 75)
+        self.__colourPickerLayout.setHorizontalSpacing(10)
+        self.__colourPickerLayout.setVerticalSpacing(10)
+        self.__createColourPickerButtons(d.MIN_VALUES)
+        widget.setLayout(self.__colourPickerLayout)
+        pageLayout.addWidget(widget, alignment=Qt.AlignHCenter)
+        pageLayout.addStretch(self.__menuBetweenStretch)
 
         bloomIntensityLabel = self.__createLabel("Bloom Intensity", "BloomIntensityLabel")
         self.__bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
@@ -200,7 +215,6 @@ class MainScreen(QMainWindow):
         "Images (*.png *.jpg)"
         )
 
-        # TODO REST SLIDERS WHEN LOADING A NEW IMAGE
         if filename:
             self.__updatePixMap(str(filename))
             self.__resetSettings()
@@ -263,6 +277,33 @@ class MainScreen(QMainWindow):
         ditherOptions.setStyleSheet(styleSheet)
         ditherOptions.currentTextChanged.connect(self.__setDitherAlgorithm)
         return ditherOptions    
+    
+    def __createColourPickerButtons(self, value):
+        rgbValues = np.linspace(0, 255, value).astype(np.uint8)
+        if self.__currValues < value:
+            for i in range(self.__currValues, value):
+                button = self.__createPushButton(f"{i+1} Colour", f"ColourPicker{i+1}")
+                
+                button.setFixedSize(QSize(75, 75))
+                position = (i//3, i%3)
+                self.__colourPickerLayout.addWidget(button, position[0], position[1])
+        elif self.__currValues > value:
+            for i in range (self.__currValues, value, -1):
+                button = self.__colourPickerLayout.takeAt(self.__colourPickerLayout.count() - 1).widget()
+                if button is not None:
+                    button.setParent(None)
+        for i in range(value):
+            button = self.__colourPickerLayout.itemAt(i).widget()
+            button.setStyleSheet(f"""font: 11pt \"Cascadia Code\";
+                        text-align: center;
+                        color: {self.__textColor.name()};
+                        background-color: rgb({rgbValues[i]}, {rgbValues[i]}, {rgbValues[i]})""")
+            
+        self.__currValues = value
+            
+
+        
+        
     
     def __updatePixMap(self, filePath= None):
         if filePath:
