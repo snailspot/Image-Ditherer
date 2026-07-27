@@ -15,12 +15,13 @@ vd = da.VerticalDiffusionDithering()
 
 # colourMap = np.array([[48, 57, 42], [102, 109, 102], [141, 152, 58], [211, 228, 87]])
 # colourMap2D = np.array([[48, 57, 42], [141, 152, 58]])
+# TestMap = np.array([[255, 0, 0], [0, 255, 0], [0, 0, 255]])
 # colourPinkMap = np.array([[72, 31, 56] , [72, 31, 56] , [149, 64, 117], [249,192, 218]])
 
 # ed.loadImage(filepath)
 # bo.setMatrixSize(3)
-# ed.adjustImage(0, 0)
-# ed.dither(vd, pixelSize=3, colourMap=colourPinkMap, bloomSpread=10, bloomLevel=10)
+# # ed.adjustImage(0, 0)
+# ed.dither(vd, pixelSize=4, colourMap=TestMap)
 # ed.displayImage()
 
 app = QApplication(sys.argv)

@@ -300,12 +300,10 @@ class MainScreen(QMainWindow):
                 button = self.__colourPickerLayout.takeAt(self.__colourPickerLayout.count() - 1).widget()
                 if button is not None:
                     button.setParent(None)
-        print(value)
         for i in range(value):
             button = self.__colourPickerLayout.itemAt(i).widget()
             if np.all(self.__colours[i] == 0) or np.any(np.all(self.__colours[i] == rgbValues, axis=1)):
                 pos = d.MAX_VALUES - 1 if i == (value -1) else int((i/value) * d.MAX_VALUES )
-                print(f"{i}, pos{pos}")
                 button.setProperty("colour", QColor(int(rgbValues[pos][0]), int(rgbValues[pos][0]), int(rgbValues[pos][0])))
                 self.__colours[i] = rgbValues[pos]
             else:
@@ -325,11 +323,10 @@ class MainScreen(QMainWindow):
         if filePath:
             self.__ditherer.loadImage(filePath)
         
-        print(self.__colours[0:self.__currValues])
         imgArray = np.ascontiguousarray(self.__ditherer.dither(ditherMethod=self.__chosenAlgorithm, \
                                                                brightness=self.__brightnessSlider.value(), contrast=self.__contrastSlider.value(), \
                                                                noiseLevel=self.__noiseSlider.value(), values=self.__valuesSlider.value(), pixelSize=self.__pixelSlider.value(), \
-                                                               colourMap=self.__colours[0:self.__currValues], bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
+                                                               colourMap=self.__colours, bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
@@ -343,12 +340,13 @@ class MainScreen(QMainWindow):
         self.__brightnessSlider.setValue((d.MAX_BRIGHTNESS + d.MIN_BRIGHTNESS) //2)
 
         self.__noiseSlider.setValue(d.MIN_NOISE)
-        self.__colours = [0] * d.MAX_VALUES
+        self.__colours = np.zeros((d.MAX_VALUES, 3), dtype=np.uint8)
         self.__valuesSlider.setValue(d.MIN_VALUES)
         self.__pixelSlider.setValue(d.MIN_PIXEL_SIZE)
 
         self.__bloomIntensitySlider.setValue(d.MIN_BLOOM_LEVEL)
         self.__bloomSpreadSlider.setValue(d.MIN_BLOOM_SPREAD)
+        self.__ditherPause.start()
     
     def __setDitherAlgorithm(self, value):
         match value:

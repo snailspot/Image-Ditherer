@@ -47,6 +47,7 @@ class ImageDitherer():
                 self.loadImage(r"assets\testInputColour.png")
             self.__adjustImage(brightness, contrast)
             self.__ditheredImageArray = np.copy(self.__imageArray)
+            print(values, colourMap.size)
             # Adjust pixel size and dither
             if pixelSize > MIN_PIXEL_SIZE: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
@@ -59,7 +60,7 @@ class ImageDitherer():
             
             # Apply colour map
             if colourMap is not None and colourMap.size//3 >= 2:
-                self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap)
+                self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap[0:values])
             
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
@@ -124,11 +125,12 @@ class ImageDitherer():
 
     def __colourise(self, pixArray, colourMap):
         colourArray = np.dstack((pixArray, pixArray, pixArray))
-        imageValues = np.unique(colourArray).astype('uint8')
+        imageValues = np.unique(colourArray)
         if imageValues.size * 3 == colourMap.size:
+            originalImage = colourArray.copy()
             for i in range (imageValues.size):
                 value = imageValues[i]
-                mask = np.all(colourArray == value, axis=-1)
+                mask = np.all(originalImage == value, axis=-1)
                 colourArray[mask] = colourMap[i]
             return colourArray
         else:
