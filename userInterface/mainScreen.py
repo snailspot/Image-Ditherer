@@ -49,7 +49,7 @@ class MainScreen(QMainWindow):
         menuLayout = QVBoxLayout()
         menuLayout.addLayout(self.__createNavBar(), 0)
         menuLayout.addLayout(self.__createMenus(centralWidget), 1)
-        menuLayout.addLayout(self.__createLoadSaveButtons(), 0)
+        menuLayout.addLayout(self.__createBottomMenuButtons(), 0)
 
         imgLayout = self.__createImgLayout()
         
@@ -202,15 +202,18 @@ class MainScreen(QMainWindow):
         self.buttonGroup.buttons()[0].setChecked(True)
         return navBarLayout
     
-    def __createLoadSaveButtons(self):
+    def __createBottomMenuButtons(self):
         saveBtn = self.__createPushButton("save", "save")
         saveBtn.clicked.connect(self.__saveFileDialog)
         loadBtn = self.__createPushButton("load", "load")
         loadBtn.clicked.connect(self.__loadFileDialog)
-        saveLoadLayout = QHBoxLayout()
-        saveLoadLayout.addWidget(loadBtn,0)
-        saveLoadLayout.addWidget(saveBtn,0)
-        return saveLoadLayout
+        resetBtn = self.__createPushButton("reset", "reset")
+        resetBtn.clicked.connect(self.__resetSettings)
+        bottomLayout = QHBoxLayout()
+        bottomLayout.addWidget(loadBtn,0)
+        bottomLayout.addWidget(saveBtn,0)
+        bottomLayout.addWidget(resetBtn, 0)
+        return bottomLayout
     
     def __loadFileDialog(self):
         filename, _ = QFileDialog.getOpenFileName(
@@ -339,14 +342,12 @@ class MainScreen(QMainWindow):
         self.__brightnessSlider.setValue((d.MAX_BRIGHTNESS + d.MIN_BRIGHTNESS) //2)
 
         self.__noiseSlider.setValue(d.MIN_NOISE)
+        self.__colours = [0] * d.MAX_VALUES
         self.__valuesSlider.setValue(d.MIN_VALUES)
         self.__pixelSlider.setValue(d.MIN_PIXEL_SIZE)
 
         self.__bloomIntensitySlider.setValue(d.MIN_BLOOM_LEVEL)
         self.__bloomSpreadSlider.setValue(d.MIN_BLOOM_SPREAD)
-
-        self.__colours = [0] * d.MAX_VALUES
-
     
     def __setDitherAlgorithm(self, value):
         match value:
