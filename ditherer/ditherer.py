@@ -47,7 +47,6 @@ class ImageDitherer():
                 self.loadImage(r"assets\testInputColour.png")
             self.__adjustImage(brightness, contrast)
             self.__ditheredImageArray = np.copy(self.__imageArray)
-            values = values if colourMap is None else colourMap.size // 3
             # Adjust pixel size and dither
             if pixelSize > MIN_PIXEL_SIZE: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)

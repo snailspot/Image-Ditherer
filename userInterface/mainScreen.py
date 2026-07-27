@@ -32,7 +32,7 @@ class MainScreen(QMainWindow):
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
     __currValues = 0
-    __colours = [0] * d.MAX_VALUES
+    __colours = np.zeros((d.MAX_VALUES, 3), dtype=np.uint8)
 
     def __init__(self):
         super().__init__()
@@ -287,7 +287,7 @@ class MainScreen(QMainWindow):
         return ditherOptions    
     
     def __createColourPickerButtons(self, value):
-        rgbValues = np.linspace(0, 255, d.MAX_VALUES).astype(np.uint8)
+        rgbValues = np.linspace(0, 255, d.MAX_VALUES).astype(np.uint8).reshape(-1, 1) * np.ones((d.MAX_VALUES, 3))
         if self.__currValues < value:
             for i in range(self.__currValues, value):
                 button = self.__createPushButton("", f"ColourPicker{i+1}")
@@ -300,24 +300,24 @@ class MainScreen(QMainWindow):
                 button = self.__colourPickerLayout.takeAt(self.__colourPickerLayout.count() - 1).widget()
                 if button is not None:
                     button.setParent(None)
+        print(value)
         for i in range(value):
             button = self.__colourPickerLayout.itemAt(i).widget()
-            print(value)
-            if self.__colours[i] == 0:
-                
-                button.setStyleSheet(f"""background-color: rgb({rgbValues[i]}, {rgbValues[i]}, {rgbValues[i]})""")
-                button.setProperty("colour", QColor(rgbValues[i], rgbValues[i], rgbValues[i]))
-                self.__colours[i] = (rgbValues[i], rgbValues[i], rgbValues[i])
+            if np.all(self.__colours[i] == 0) or np.any(np.all(self.__colours[i] == rgbValues, axis=1)):
+                pos = d.MAX_VALUES - 1 if i == (value -1) else int((i/value) * d.MAX_VALUES )
+                print(f"{i}, pos{pos}")
+                button.setProperty("colour", QColor(int(rgbValues[pos][0]), int(rgbValues[pos][0]), int(rgbValues[pos][0])))
+                self.__colours[i] = rgbValues[pos]
             else:
-                button.setStyleSheet(f"""background-color: rgb({self.__colours[i]})""")
                 button.setProperty("colour", QColor(self.__colours[i][0], self.__colours[i][1], self.__colours[i][2]))
+            button.setStyleSheet(f"""background-color: {button.property("colour").name()}""")
         self.__currValues = value
             
     def __getColour(self, button, position):
         colour =  QColorDialog.getColor(button.property("colour"))
         button.setStyleSheet(f"""background-color: {colour.name()}""")
         button.setProperty("colour", colour)
-        self.__colours[position] = colour.getRgb()[:3]
+        self.__colours[position] = [colour.red(), colour.green(), colour.blue()]
         self.__ditherPause.start()
 
     
@@ -325,10 +325,11 @@ class MainScreen(QMainWindow):
         if filePath:
             self.__ditherer.loadImage(filePath)
         
+        print(self.__colours[0:self.__currValues])
         imgArray = np.ascontiguousarray(self.__ditherer.dither(ditherMethod=self.__chosenAlgorithm, \
                                                                brightness=self.__brightnessSlider.value(), contrast=self.__contrastSlider.value(), \
-                                                               noiseLevel=self.__noiseSlider.value(), values=self.__currValues, pixelSize=self.__pixelSlider.value(), \
-                                                               colourMap=np.array(self.__colours[0:self.__currValues]), bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
+                                                               noiseLevel=self.__noiseSlider.value(), values=self.__valuesSlider.value(), pixelSize=self.__pixelSlider.value(), \
+                                                               colourMap=self.__colours[0:self.__currValues], bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
