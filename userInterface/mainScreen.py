@@ -32,6 +32,7 @@ class MainScreen(QMainWindow):
     __atkinson = da.AtkinsonDithering()
     __vert = da.VerticalDiffusionDithering()
     __currValues = 0
+    __colours = [0] * d.MAX_VALUES
 
     def __init__(self):
         super().__init__()
@@ -169,6 +170,8 @@ class MainScreen(QMainWindow):
         bloomIntensityLabel = self.__createLabel("Bloom Intensity", "BloomIntensityLabel")
         self.__bloomIntensitySlider = self.__createSlider("BloomIntensitySlider", d.MIN_BLOOM_LEVEL, d.MAX_BLOOM_LEVEL, d.MIN_BLOOM_LEVEL, effectsPage.width())
         self.__bloomIntensitySlider.setPageStep(d.MAX_BLOOM_LEVEL//5)
+        self.__bloomIntensitySlider.setPageStep(1)
+        self.__bloomIntensitySlider.setSingleStep(1)
         pageLayout.addWidget(bloomIntensityLabel, 0)
         pageLayout.addWidget(self.__bloomIntensitySlider, 0, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
@@ -177,6 +180,8 @@ class MainScreen(QMainWindow):
         self.__bloomSpreadSlider = self.__createSlider("BloomSpreadSlider", d.MIN_BLOOM_SPREAD, d.MAX_BLOOM_SPREAD, d.MIN_BLOOM_SPREAD, effectsPage.width())
         self.__bloomSpreadSlider.setPageStep(d.MAX_BLOOM_SPREAD//5)
         pageLayout.addWidget(bloomSpreadLabel, 0)
+        self.__bloomSpreadSlider.setPageStep(1)
+        self.__bloomSpreadSlider.setSingleStep(1)
         pageLayout.addWidget(self.__bloomSpreadSlider, 0, alignment=Qt.AlignHCenter)
         
         pageLayout.addStretch(self.__menuBottomStretch)
@@ -279,12 +284,12 @@ class MainScreen(QMainWindow):
         return ditherOptions    
     
     def __createColourPickerButtons(self, value):
-        rgbValues = np.linspace(0, 255, value).astype(np.uint8)
+        rgbValues = np.linspace(0, 255, d.MAX_VALUES).astype(np.uint8)
         if self.__currValues < value:
             for i in range(self.__currValues, value):
-                button = self.__createPushButton(f"{i+1} Colour", f"ColourPicker{i+1}")
-                
+                button = self.__createPushButton("", f"ColourPicker{i+1}")
                 button.setFixedSize(QSize(75, 75))
+                button.clicked.connect(lambda checked, b=button, pos=i : self.__getColour(b, pos))
                 position = (i//3, i%3)
                 self.__colourPickerLayout.addWidget(button, position[0], position[1])
         elif self.__currValues > value:
@@ -294,16 +299,24 @@ class MainScreen(QMainWindow):
                     button.setParent(None)
         for i in range(value):
             button = self.__colourPickerLayout.itemAt(i).widget()
-            button.setStyleSheet(f"""font: 11pt \"Cascadia Code\";
-                        text-align: center;
-                        color: {self.__textColor.name()};
-                        background-color: rgb({rgbValues[i]}, {rgbValues[i]}, {rgbValues[i]})""")
-            
+            print(value)
+            if self.__colours[i] == 0:
+                
+                button.setStyleSheet(f"""background-color: rgb({rgbValues[i]}, {rgbValues[i]}, {rgbValues[i]})""")
+                button.setProperty("colour", QColor(rgbValues[i], rgbValues[i], rgbValues[i]))
+                self.__colours[i] = (rgbValues[i], rgbValues[i], rgbValues[i])
+            else:
+                button.setStyleSheet(f"""background-color: rgb({self.__colours[i]})""")
+                button.setProperty("colour", QColor(self.__colours[i][0], self.__colours[i][1], self.__colours[i][2]))
         self.__currValues = value
             
+    def __getColour(self, button, position):
+        colour =  QColorDialog.getColor(button.property("colour"))
+        button.setStyleSheet(f"""background-color: {colour.name()}""")
+        button.setProperty("colour", colour)
+        self.__colours[position] = colour.getRgb()[:3]
+        self.__ditherPause.start()
 
-        
-        
     
     def __updatePixMap(self, filePath= None):
         if filePath:
@@ -311,8 +324,8 @@ class MainScreen(QMainWindow):
         
         imgArray = np.ascontiguousarray(self.__ditherer.dither(ditherMethod=self.__chosenAlgorithm, \
                                                                brightness=self.__brightnessSlider.value(), contrast=self.__contrastSlider.value(), \
-                                                               noiseLevel=self.__noiseSlider.value(), values=self.__valuesSlider.value(), pixelSize=self.__pixelSlider.value(), \
-                                                               bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
+                                                               noiseLevel=self.__noiseSlider.value(), values=self.__currValues, pixelSize=self.__pixelSlider.value(), \
+                                                               colourMap=np.array(self.__colours[0:self.__currValues]), bloomLevel=self.__bloomIntensitySlider.value(), bloomSpread=self.__bloomSpreadSlider.value() ).astype(np.uint8))
         height, width = imgArray.shape[:2]
         if imgArray.ndim == 2:
             image = QImage(imgArray.data, width, height, width, QImage.Format_Grayscale8)
@@ -331,6 +344,8 @@ class MainScreen(QMainWindow):
 
         self.__bloomIntensitySlider.setValue(d.MIN_BLOOM_LEVEL)
         self.__bloomSpreadSlider.setValue(d.MIN_BLOOM_SPREAD)
+
+        self.__colours = [0] * d.MAX_VALUES
 
     
     def __setDitherAlgorithm(self, value):
