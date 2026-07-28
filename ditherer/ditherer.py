@@ -19,7 +19,7 @@ MIN_VALUES = 2
 MAX_THRESHOLD = 90
 MAX_BLOOM_LEVEL = 30
 MIN_BLOOM_LEVEL = 0
-MAX_BLOOM_SPREAD = 20
+MAX_BLOOM_SPREAD = 15
 MIN_BLOOM_SPREAD = 0
 
 class ImageDitherer():
@@ -47,7 +47,6 @@ class ImageDitherer():
                 self.loadImage(r"assets\testInputColour.png")
             self.__adjustImage(brightness, contrast)
             self.__ditheredImageArray = np.copy(self.__imageArray)
-            print(values, colourMap.size)
             # Adjust pixel size and dither
             if pixelSize > MIN_PIXEL_SIZE: 
                 self.__ditheredImageArray = self.__resizePixels(self.__ditheredImageArray, pixelSize)
@@ -64,7 +63,7 @@ class ImageDitherer():
             
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
-                self.__ditheredImageArray = self.__addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[-2]))
+                self.__ditheredImageArray = self.__addBloom(self.__ditheredImageArray, bloomLevel, bloomSpread, self.__threshold(self.__ditheredImageArray, colourMap[0]))
             return self.__ditheredImageArray
             
             
@@ -156,7 +155,7 @@ class ImageDitherer():
     @staticmethod
     @njit(cache=True, fastmath=True)
     def __addBloom(pixArray, bloomLevel, bloomSpread, thresholdMap):
-        bloomFactor = np.array([0.29 * bloomLevel, 0.41 * bloomLevel, 0.23 * bloomLevel])
+        bloomFactor = np.array([0.33 * bloomLevel, 0.33 * bloomLevel, 0.33 * bloomLevel])
         bloomAmountInner = bloomFactor*0.35
         bloomAmountOuter = bloomFactor*0.11
         bloomOuter = int(bloomSpread* 1.2)

@@ -312,11 +312,20 @@ class MainScreen(QMainWindow):
         self.__currValues = value
             
     def __getColour(self, button, position):
-        colour =  QColorDialog.getColor(button.property("colour"))
-        button.setStyleSheet(f"""background-color: {colour.name()}""")
-        button.setProperty("colour", colour)
-        self.__colours[position] = [colour.red(), colour.green(), colour.blue()]
-        self.__ditherPause.start()
+        colourPickerDialogue = ColorPickerDialog(button.property("colour"))
+        colourPickerDialogue.setWindowIcon(QIcon())
+        colourPickerDialogue.setWindowTitle("Colour Picker")
+        colourPickerDialogue.setWindowFlags(colourPickerDialogue.windowFlags() | Qt.FramelessWindowHint)
+        colourPickerDialogue.setStyleSheet(f""" font: 11pt \"Cascadia Code\";
+                                                color: {self.__textColor.name()};
+                                                background-color: {self.__backgroundColor.name()}""")
+        reply = colourPickerDialogue.exec()
+        if reply == QDialog.Accepted:
+            colour =  colourPickerDialogue.getColor()
+            button.setStyleSheet(f"""background-color: {colour.name()}""")
+            button.setProperty("colour", colour)
+            self.__colours[position] = [colour.red(), colour.green(), colour.blue()]
+            self.__ditherPause.start()
 
     
     def __updatePixMap(self, filePath= None):
