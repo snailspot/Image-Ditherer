@@ -1,3 +1,4 @@
+
 QWidget {
     background-color: rgb(20,20,20);
 }
@@ -40,5 +41,9 @@ QComboBox{
     font: 13pt \"Cascadia Code\";
     text-align: center;
     color: rgb(231, 231, 231);
+}
+
+QFrame#border {
+    background-color: rgb(107, 107, 107);
 }
 

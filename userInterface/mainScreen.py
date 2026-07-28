@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import numpy as np
 from PyQt5.QtCore import (QSize, Qt, QTimer)
-from PyQt5.QtGui import (QColor, QIcon, QPixmap, QImage)
+from PyQt5.QtGui import (QColor, QIcon, QPixmap, QImage, QCursor)
 from PyQt5.QtWidgets import *
 from pyqt_color_picker import ColorPickerDialog
 from ditherer import ditherer as d
@@ -27,6 +27,7 @@ class MainScreen(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.setStyleSheet(Path(r'userInterface\mainScreen.qss').read_text())
         self.__ditherPause = QTimer()
         self.__ditherPause.setSingleShot(True)
         self.__ditherPause.setInterval(200)
@@ -45,12 +46,16 @@ class MainScreen(QMainWindow):
         imgLayout = self.__createImgLayout()
         
         outerLayout.addLayout(imgLayout, 5)
+        border = QFrame()
+        border.setObjectName("border")
+        border.setFrameShape(QFrame.VLine)
+        border.setLineWidth(2)
+        outerLayout.addWidget(border, 1)
         outerLayout.addLayout(menuLayout, 3)
 
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
-        self.setStyleSheet(Path(r'userInterface\mainScreen.qss').read_text())
         
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
@@ -143,6 +148,7 @@ class MainScreen(QMainWindow):
         pageLayout.addSpacing(self.__menuTopSpacing)
 
         widget = QWidget()
+        colourMapLabel = self.__createLabel("Colour Map", "ColourMapLabel")
         widget.setFixedSize(QSize(300, 200))
         self.__colourPickerLayout = QGridLayout()
         COLS = 3
@@ -155,6 +161,7 @@ class MainScreen(QMainWindow):
         self.__colourPickerLayout.setVerticalSpacing(10)
         self.__createColourPickerButtons(d.MIN_VALUES)
         widget.setLayout(self.__colourPickerLayout)
+        pageLayout.addWidget(colourMapLabel)
         pageLayout.addWidget(widget, alignment=Qt.AlignHCenter)
         pageLayout.addStretch(self.__menuBetweenStretch)
 
@@ -232,6 +239,7 @@ class MainScreen(QMainWindow):
         button = QPushButton(self)
         button.setObjectName(buttonName)
         button.setText(label)
+        button.setCursor(QCursor(Qt.PointingHandCursor))
         button.adjustSize()
         return button
         
@@ -242,6 +250,7 @@ class MainScreen(QMainWindow):
         slider.setMinimum(minValue)
         slider.setMaximum(maxValue)
         slider.setValue(initValue)
+        slider.setCursor(QCursor(Qt.PointingHandCursor))
         slider.setOrientation(Qt.Horizontal)
         slider.setPageStep((abs(minValue) + abs(maxValue))//20)
         slider.setSingleStep((abs(minValue) + abs(maxValue))//20)
