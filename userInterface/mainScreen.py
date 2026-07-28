@@ -1,25 +1,16 @@
 import sys
+from pathlib import Path
 import numpy as np
-from PyQt5.QtCore import (QCoreApplication, QMetaObject, QObject, QPoint,
-    QRect, QSize, QUrl, Qt, QTimer)
-from PyQt5.QtGui import (QBrush, QColor, QConicalGradient, QCursor, QFont,
-    QFontDatabase, QIcon, QLinearGradient, QPalette, QPainter, QPixmap,
-    QRadialGradient, QImage)
+from PyQt5.QtCore import (QSize, Qt, QTimer)
+from PyQt5.QtGui import (QColor, QIcon, QPixmap, QImage)
 from PyQt5.QtWidgets import *
 from pyqt_color_picker import ColorPickerDialog
 from ditherer import ditherer as d
 from ditherer import ditherAlgorithm as da
 
-class NavBar(QWidget):
-    def __init__(self, tab_names, stack: QStackedWidget):
-        super().__init__()
-        
-
 class MainScreen(QMainWindow):
     __appHeight = d.MAX_DIMENSIONS + 100
     __appWidth = d.MAX_DIMENSIONS + 600
-    __backgroundColor = QColor(20,20,20)
-    __textColor = QColor(231, 231, 231)
     __menuTopSpacing = 100
     __menuBetweenStretch = 1
     __menuBottomStretch = 4
@@ -59,7 +50,7 @@ class MainScreen(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
-        self.setStyleSheet(f"background-color: {self.__backgroundColor.name()};")
+        self.setStyleSheet(Path(r'userInterface\mainScreen.qss').read_text())
         
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
@@ -189,9 +180,9 @@ class MainScreen(QMainWindow):
 
     def __createNavBar(self):
         buttons = []
-        buttons.append(self.__createPushButton("Adjust", "AdjustButton"))
-        buttons.append(self.__createPushButton("Dithering", "DitheringButton"))
-        buttons.append(self.__createPushButton("Effects", "EffectsButton"))
+        buttons.append(self.__createPushButton("adjust", "topNav"))
+        buttons.append(self.__createPushButton("dithering", "topNav"))
+        buttons.append(self.__createPushButton("effects", "topNav"))
         self.buttonGroup = QButtonGroup(self)
         self.buttonGroup.setExclusive(True)
         navBarLayout = QHBoxLayout()
@@ -203,11 +194,11 @@ class MainScreen(QMainWindow):
         return navBarLayout
     
     def __createBottomMenuButtons(self):
-        saveBtn = self.__createPushButton("save", "save")
+        saveBtn = self.__createPushButton("save", "bottomNav")
         saveBtn.clicked.connect(self.__saveFileDialog)
-        loadBtn = self.__createPushButton("load", "load")
+        loadBtn = self.__createPushButton("load", "bottomNav")
         loadBtn.clicked.connect(self.__loadFileDialog)
-        resetBtn = self.__createPushButton("reset", "reset")
+        resetBtn = self.__createPushButton("reset", "bottomNav")
         resetBtn.clicked.connect(self.__resetSettings)
         bottomLayout = QHBoxLayout()
         bottomLayout.addWidget(loadBtn,0)
@@ -238,12 +229,8 @@ class MainScreen(QMainWindow):
             self.__ditherer.saveImage(str(filename))
         
     def __createPushButton(self, label, buttonName):
-        styleSheet = f"""font: 11pt \"Cascadia Code\";
-                        text-align: center;
-                        color: {self.__textColor.name()};"""
         button = QPushButton(self)
         button.setObjectName(buttonName)
-        button.setStyleSheet(styleSheet)
         button.setText(label)
         button.adjustSize()
         return button
@@ -262,27 +249,19 @@ class MainScreen(QMainWindow):
         return slider
     
     def __createLabel(self, text, labelName):
-        styleSheet = f"""font: 13pt \"Cascadia Code\";
-                        text-align: center;
-                        color: {self.__textColor.name()};"""
         label = QLabel(self)
         label.setObjectName(labelName)
-        label.setStyleSheet(styleSheet)
         label.setText(text)
         label.setAlignment(Qt.AlignHCenter)
         label.adjustSize() 
         return label
 
     def __createDitheringOptions(self, width):
-        styleSheet = f"""font: 13pt \"Cascadia Code\";
-                text-align: center;
-                color: {self.__textColor.name()};"""
         ditherOptions = QComboBox()
         ditherOptions.addItems(["Bayer's 2x2", "Bayer's 4x4", "Floyd Steinberg", "Atkinson", "Vertical Diffusion"])
         ditherOptions.setObjectName("DitherOptionsComboBox")
         ditherOptions.setMinimumWidth(int(width * 0.42))
         ditherOptions.setMaximumWidth(int(width * 0.42))
-        ditherOptions.setStyleSheet(styleSheet)
         ditherOptions.currentTextChanged.connect(self.__setDitherAlgorithm)
         return ditherOptions    
     
@@ -290,7 +269,7 @@ class MainScreen(QMainWindow):
         rgbValues = np.linspace(0, 255, d.MAX_VALUES).astype(np.uint8).reshape(-1, 1) * np.ones((d.MAX_VALUES, 3))
         if self.__currValues < value:
             for i in range(self.__currValues, value):
-                button = self.__createPushButton("", f"ColourPicker{i+1}")
+                button = self.__createPushButton("", f"ColourPicker")
                 button.setFixedSize(QSize(75, 75))
                 button.clicked.connect(lambda checked, b=button, pos=i : self.__getColour(b, pos))
                 position = (i//3, i%3)
@@ -308,21 +287,22 @@ class MainScreen(QMainWindow):
                 self.__colours[i] = rgbValues[pos]
             else:
                 button.setProperty("colour", QColor(self.__colours[i][0], self.__colours[i][1], self.__colours[i][2]))
-            button.setStyleSheet(f"""background-color: {button.property("colour").name()}""")
+            button.setStyleSheet(f"""background-color: {button.property("colour").name()};
+                                        border-radius: 8px;""")
         self.__currValues = value
             
     def __getColour(self, button, position):
-        colourPickerDialogue = ColorPickerDialog(button.property("colour"))
-        colourPickerDialogue.setWindowIcon(QIcon())
-        colourPickerDialogue.setWindowTitle("Colour Picker")
-        colourPickerDialogue.setWindowFlags(colourPickerDialogue.windowFlags() | Qt.FramelessWindowHint)
-        colourPickerDialogue.setStyleSheet(f""" font: 11pt \"Cascadia Code\";
-                                                color: {self.__textColor.name()};
-                                                background-color: {self.__backgroundColor.name()}""")
-        reply = colourPickerDialogue.exec()
+        dialog = ColorPickerDialog(button.property("colour"))
+        dialog.setWindowIcon(QIcon())
+        dialog.setWindowTitle("Colour Picker")
+        dialog.setStyleSheet(f""" font: 11pt \"Cascadia Code\";
+                                    color: rgb(231, 231, 231);
+                                    background-color: rgb(20,20,20);""")
+        reply = dialog.exec()
         if reply == QDialog.Accepted:
-            colour =  colourPickerDialogue.getColor()
-            button.setStyleSheet(f"""background-color: {colour.name()}""")
+            colour =  dialog.getColor()
+            button.setStyleSheet(f"""background-color: {colour.name()};
+                                        border-radius: 8px;""")
             button.setProperty("colour", colour)
             self.__colours[position] = [colour.red(), colour.green(), colour.blue()]
             self.__ditherPause.start()
@@ -350,6 +330,7 @@ class MainScreen(QMainWindow):
 
         self.__noiseSlider.setValue(d.MIN_NOISE)
         self.__colours = np.zeros((d.MAX_VALUES, 3), dtype=np.uint8)
+        self.__createColourPickerButtons(d.MIN_VALUES)
         self.__valuesSlider.setValue(d.MIN_VALUES)
         self.__pixelSlider.setValue(d.MIN_PIXEL_SIZE)
 

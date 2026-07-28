@@ -1,0 +1,44 @@
+QWidget {
+    background-color: rgb(20,20,20);
+}
+
+QPushButton{
+    font: 11pt \"Cascadia Code\";
+    text-align: center;
+    color: rgb(191, 191, 191);
+    border: 2px solid rgb(20,20,20);
+    padding: 6px 0px;
+    margin-bottom: 10px;
+}
+
+QPushButton#topNav:hover{
+    color: rgb(231, 231, 231);
+    border-bottom: 2px solid rgb(231, 231, 231);
+    
+}
+
+QPushButton#bottomNav:hover{
+    color: rgb(231, 231, 231);
+    border-top: 2px solid rgb(231, 231, 231);
+}
+
+QPushButton#topNav:checked{
+    border-bottom: 2px solid rgb(191, 191, 191);
+}
+
+QPushButton#ColourPicker:hover{
+    border-radius: 16px;
+}
+
+QLabel{
+    font: 11pt \"Cascadia Code\";
+    text-align: center;
+    color: rgb(231, 231, 231);
+}
+
+QComboBox{
+    font: 13pt \"Cascadia Code\";
+    text-align: center;
+    color: rgb(231, 231, 231);
+}
+
