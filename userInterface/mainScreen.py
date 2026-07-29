@@ -271,6 +271,7 @@ class MainScreen(QMainWindow):
         ditherOptions.setObjectName("DitherOptionsComboBox")
         ditherOptions.setMinimumWidth(int(width * 0.42))
         ditherOptions.setMaximumWidth(int(width * 0.42))
+        ditherOptions.setCursor(QCursor(Qt.PointingHandCursor))
         ditherOptions.currentTextChanged.connect(self.__setDitherAlgorithm)
         return ditherOptions    
     
