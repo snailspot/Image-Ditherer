@@ -44,7 +44,7 @@ class ImageDitherer():
 
     def dither(self, ditherMethod : DitherAlgorithm, values=MIN_VALUES, valueThresholds = None, pixelSize=1, colourMap = None, noiseLevel=0, bloomLevel=0, bloomSpread=1, contrast=0, brightness=0):
             if self.__baseImageArray is None:
-                self.loadImage(r"assets\testInputColour.png")
+                self.loadImage(r"assets\default.png")
             self.__adjustImage(brightness, contrast)
             self.__ditheredImageArray = np.copy(self.__imageArray)
             # Adjust pixel size and dither

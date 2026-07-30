@@ -27,7 +27,7 @@ class MainScreen(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setStyleSheet(Path(r'userInterface\mainScreen.qss').read_text())
+        self.setStyleSheet(self.__getStyleSheet())
         self.__ditherPause = QTimer()
         self.__ditherPause.setSingleShot(True)
         self.__ditherPause.setInterval(200)
@@ -46,16 +46,35 @@ class MainScreen(QMainWindow):
         imgLayout = self.__createImgLayout()
         
         outerLayout.addLayout(imgLayout, 5)
-        border = QFrame()
-        border.setObjectName("border")
-        border.setFrameShape(QFrame.VLine)
-        border.setLineWidth(2)
-        outerLayout.addWidget(border, 1)
         outerLayout.addLayout(menuLayout, 3)
 
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
         self.setWindowTitle("_dither_tool")
+        self.setWindowIcon(QIcon(r".\assets\icon.png"))
+
+    def __getStyleSheet(self):
+        bgColour = "rgb(20,20,20)"
+        secondaryColour = "rgb(231, 231, 231)"
+        accentColour = "rgb(191, 191, 191)"
+        tertiaryColour = "rgb(83, 83, 83)"
+        tertiaryHoverColour = "rgb(107, 107, 107)"
+        font = r"\"Cascadia Code\""
+        fontSize = 11
+        downArrowPath = r"./assets/combo_box_down_arrow.png"
+
+
+        styleSheet = Path(r'userInterface\styleSheet.txt').read_text().format(
+            _bgColour = bgColour,
+            _secondaryColour = secondaryColour,
+            _accentColour = accentColour,
+            _tertiaryColour = tertiaryColour,
+            _tertiaryHoverColour = tertiaryHoverColour,
+            _font = font,
+            _fontSize = fontSize,
+            _downArrowPath = downArrowPath
+        )
+        return styleSheet
         
     def __createImgLayout(self):
         imgLayout = QVBoxLayout()
