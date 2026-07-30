@@ -61,8 +61,8 @@ class MainScreen(QMainWindow):
         tertiaryHoverColour = "rgb(107, 107, 107)"
         font = r"\"Cascadia Code\""
         fontSize = 11
+        borderSize = 2
         downArrowPath = r"./assets/combo_box_down_arrow.png"
-
 
         styleSheet = Path(r'userInterface\styleSheet.txt').read_text().format(
             _bgColour = bgColour,
@@ -72,6 +72,7 @@ class MainScreen(QMainWindow):
             _tertiaryHoverColour = tertiaryHoverColour,
             _font = font,
             _fontSize = fontSize,
+            _borderSize = 2,
             _downArrowPath = downArrowPath
         )
         return styleSheet
@@ -128,7 +129,7 @@ class MainScreen(QMainWindow):
         ditheringPage.setLayout(pageLayout)
         pageLayout.addSpacing(self.__menuTopSpacing)
 
-        ditherOptionsLabel = self.__createLabel("Dithering Algorithms", "DitherOptionsLabel")
+        ditherOptionsLabel = self.__createLabel("Algorithm", "DitherOptionsLabel")
         ditherOptions = self.__createDitheringOptions(ditheringPage.width())
         pageLayout.addWidget(ditherOptionsLabel, 0)
         pageLayout.addSpacing(40)
@@ -317,7 +318,7 @@ class MainScreen(QMainWindow):
             else:
                 button.setProperty("colour", QColor(self.__colours[i][0], self.__colours[i][1], self.__colours[i][2]))
             button.setStyleSheet(f"""background-color: {button.property("colour").name()};
-                                        border-radius: 8px;""")
+                                    border-radius: 8px;""")
         self.__currValues = value
             
     def __getColour(self, button, position):
@@ -331,7 +332,7 @@ class MainScreen(QMainWindow):
         if reply == QDialog.Accepted:
             colour =  dialog.getColor()
             button.setStyleSheet(f"""background-color: {colour.name()};
-                                        border-radius: 8px;""")
+                                    border-radius: 8px;""")
             button.setProperty("colour", colour)
             self.__colours[position] = [colour.red(), colour.green(), colour.blue()]
             self.__ditherPause.start()

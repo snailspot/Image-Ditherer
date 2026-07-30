@@ -5,21 +5,25 @@ QPushButton{{
     font: {_fontSize}pt {_font};
     text-align: center;
     color: {_accentColour};
-    border: 2px solid {_bgColour};
+    border: {_borderSize}px solid {_bgColour};
     padding: 6px 0px;
     margin-bottom: 10px;
 }}
 QPushButton#topNav:hover{{
     color: {_secondaryColour};
-    border-bottom: 2px solid {_secondaryColour};
+    border-bottom: {_borderSize}px solid {_secondaryColour};
     
 }}
 QPushButton#bottomNav:hover{{
     color: {_secondaryColour};
-    border-top: 2px solid {_secondaryColour};
+    border-top: {_borderSize}px solid {_secondaryColour};
 }}
-QPushButton#topNav:checked{{border-bottom: 2px solid {_accentColour};}}
-QPushButton#ColourPicker:hover{{border-radius: 16px;}}
+QPushButton#topNav:checked{{
+    border-bottom: {_borderSize}px solid {_accentColour};
+}}
+QPushButton#ColourPicker:hover{{
+    border: {_borderSize}px solid {_accentColour};
+}}
 QLabel{{
     font: {_fontSize}pt {_font};
     text-align: center;
@@ -32,7 +36,9 @@ QSlider::groove:horizontal{{
     margin: 0px;
     background-color: {_tertiaryColour};
 }}
-QSlider::groove:hover:horizontal{{background-color: {_tertiaryHoverColour};}}
+QSlider::groove:hover:horizontal{{
+    background-color: {_tertiaryHoverColour};
+}}
 QSlider::handle:horizontal{{
     border: none;
     height: 15px;
@@ -41,7 +47,9 @@ QSlider::handle:horizontal{{
     border-radius: 3px;
     background-color: {_accentColour};
 }}
-QSlider::handle:horizontal:hover{{background-color: {_secondaryColour};}}
+QSlider::handle:horizontal:hover{{
+    background-color: {_secondaryColour};
+}}
 QComboBox{{
     background-color: {_tertiaryColour};
     border-radius: 3px;
@@ -51,7 +59,10 @@ QComboBox{{
     font: {_fontSize}pt {_font};
     color: {_secondaryColour};
 }}
-QComboBox:hover{{background-color: {_tertiaryHoverColour};}}
+QComboBox:hover{{
+    background-color: {_tertiaryHoverColour};
+    border: {_borderSize}px solid {_accentColour};
+}}
 QComboBox::drop-down{{
     border:none;
     width: 25px;
