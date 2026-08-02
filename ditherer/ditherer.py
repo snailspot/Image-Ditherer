@@ -59,7 +59,7 @@ class ImageDitherer():
             
             # Apply colour map
             if colourMap is not None and colourMap.size//3 >= 2:
-                self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap[0:values])
+                self.__ditheredImageArray = self.__colourise(self.__ditheredImageArray, colourMap[0:values], values)
             
             # Apply Bloom
             if bloomLevel > 0 and colourMap is not None and colourMap.size//3 >= 2:
@@ -122,18 +122,15 @@ class ImageDitherer():
     def __resetSize(self, pixArray, pixelSize):
         return pixArray.repeat(pixelSize, axis=0).repeat(pixelSize, axis=1)
 
-    def __colourise(self, pixArray, colourMap):
+    def __colourise(self, pixArray, colourMap, values):
         colourArray = np.dstack((pixArray, pixArray, pixArray))
-        imageValues = np.unique(colourArray)
-        if imageValues.size * 3 == colourMap.size:
-            originalImage = colourArray.copy()
-            for i in range (imageValues.size):
-                value = imageValues[i]
-                mask = np.all(originalImage == value, axis=-1)
-                colourArray[mask] = colourMap[i]
-            return colourArray
-        else:
-            raise IndexError("Number of colours in colour map and number of values in image must match to colourise")
+        originalImage = colourArray.copy()
+        imageValues = np.linspace(0, 255, values).astype(np.float32)
+        for i in range (imageValues.size):
+            value = imageValues[i]
+            mask = np.all(originalImage == value, axis=-1)
+            colourArray[mask] = colourMap[i]
+        return colourArray
     
     def __addNoise(self, pixArray, noiseLevel, out=None):
         width, height = pixArray.shape
