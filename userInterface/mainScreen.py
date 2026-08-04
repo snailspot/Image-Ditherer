@@ -50,7 +50,7 @@ class MainScreen(QMainWindow):
 
         self.setCentralWidget(centralWidget)
         self.setMinimumSize(QSize(self.__appWidth, self.__appHeight))
-        self.setWindowTitle("_dither_tool")
+        self.setWindowTitle("Simple Image Ditherer")
         self.setWindowIcon(QIcon(r".\assets\icon.png"))
 
     def __getStyleSheet(self):
@@ -61,7 +61,6 @@ class MainScreen(QMainWindow):
         tertiaryHoverColour = "rgb(107, 107, 107)"
         font = r"\"Cascadia Code\""
         fontSize = 11
-        borderSize = 2
         downArrowPath = r"./assets/combo_box_down_arrow.png"
 
         styleSheet = Path(r'userInterface\styleSheet.txt').read_text().format(
