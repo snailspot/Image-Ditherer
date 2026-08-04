@@ -5,10 +5,10 @@
 ![Landing image for simple image ditherer showcasing UI](/assets/readME_landing_image.png)
 
 ## What this is:
-Exactly what it says in the tin! A simple lightweight image dithering tool. Parses images using numpy arrays and Numba JIT compiling to be as performant as possible. Able to process a rage of different dithering algorithm, including:
+Exactly what it says in the tin! A simple lightweight image dithering tool. Parses images using numpy arrays and Numba JIT compiling to be as performant as possible. Able to process a rage of different dithering algorithms, including:
 
 - Ordered dithering using Bayer's matrices
-- Error diffusion (Floyd-Steinberg &Atkinson)
+- Error diffusion (Floyd-Steinberg & Atkinson)
 
 The tool is also capable of limited image preprocessing, colourising dithered outputs and applying bloom effects, all wrapped in an intuitive GUI.
 
@@ -21,7 +21,7 @@ This project was developed in Python version 3.13.3 and must be installed prior 
 
 ## Features:
 
-There are three main tabs in the navigation bar which all broadly manipulate the dithered image. The buttons along the bottom of the GUI allow for loading, saving and resetting the image.
+There are three main tabs in the navigation bar which all manipulate the image in different ways. The buttons along the bottom of the GUI allow for loading, saving and resetting the image.
 
 ### Adjust
 
