@@ -12,7 +12,6 @@ Exactly what it says in the tin! A simple lightweight image dithering tool. Pars
 
 The tool is also capable of limited image preprocessing, colourising dithered outputs and applying bloom effects, all wrapped in an intuitive GUI.
 
----
 ## How to run this:
 This project was developed in Python version 3.13.3 and must be installed prior to using this tool. Installation is simple, follow the steps below:
 1) Download the repository
@@ -43,5 +42,5 @@ This is where the real meat and potatoes of the tool reside. It contains the cor
 The effects tab colourises and adds bloom effects to the dithered image and is applied after the image is dithered.
 
 - ***Colour Map*** allows the colour palette of the dithered greyscale output to be changed. The number of colours is determined by the ***Values*** slider and defaults to greyscale values between white and black
-- ***Bloom Intensity***
-- ***Bloom Spread***
+- ***Bloom Intensity*** adjusts how strong the bloom effect is applied. The bloom selects the last colour as the threshold value upon which all pixel values brighter will have the bloom applied to it.
+- ***Bloom Spread*** adjusts how many pixels the bloom is applied to. It has an inner and outer range where different intensities are applied (box bloom)
